@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String          @id @default(cuid())
+  name               String
+  email              String          @unique
+  password           String
+  total_pnl          Int             @default(0)
+  ph_number          String
+  ph_number_verified Boolean         @default(false)
+  photo              String?
+  verified           Boolean         @default(false)
+  subscriptionExpiry DateTime?
+  role               Role
+  account            MasterAccount[]
+  transaction        Transaction[]
+  prefrences         Prefrences[]
+}
+
+model MasterAccount {
+  id                      String    @id @default(cuid())
+  user_id                 String
+  u_id                    String    @unique
+  broker                  Broker
+  broker_id               String    @unique
+  key                     String
+  secret                  String
+  access_token            String?
+  last_token_generated_at DateTime?
+  pnl                     Int       @default(0)
+  added_at                DateTime  @default(now())
+  modified_at             DateTime  @default(now())
+
+  user          User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  child_account ChildAccount[]
+}
+
+model ChildAccount {
+  id                      String        @id @default(cuid())
+  master_id               String
+  u_id                    String        @unique
+  broker                  Broker
+  broker_id               String        @unique
+  key                     String
+  secret                  String
+  access_token            String?
+  last_token_generated_at DateTime?
+  multiplier              Int           @default(1)
+  active                  Boolean       @default(true)
+  added_at                DateTime      @default(now())
+  modified_at             DateTime      @default(now())
+  pnl                     Int           @default(0)
+  master                  MasterAccount @relation(fields: [master_id], references: [id], onDelete: Cascade)
+}
+
+model OrderBook {
+  id          Int      @id @default(autoincrement())
+  accountId   String   // Account ID (Foreign Key)
+  orderId     String   @unique // Unique order ID
+  orderDetails Json    // Order details stored as JSON
+  childOrders Json     // Child orders stored as JSON array
+  createdAt   DateTime @default(now())
+}
+
+model Position {
+  id             Int      @id @default(autoincrement())
+  accountId      String   // Account ID (Foreign Key)
+  symbol         String   // Symbol Name
+  positionDetails Json    // Position details stored as JSON
+  tracked        Boolean  // Whether this position is tracked or untracked
+  createdAt      DateTime @default(now())
+}
+
+model Prefrences {
+  id                   String  @id @default(cuid())
+  user_id              String? @unique
+  stoploss             Int     @default(100)
+  target               Int     @default(1000)
+  sl_increment         Int     @default(1)
+  target_increment     Int     @default(1)
+  trailing_point       Int     @default(1)
+  mtm_stoploss         Int     @default(100)
+  mtm_target           Int     @default(1000)
+  mtm_sl_increment     Int     @default(1)
+  mtm_target_increment Int     @default(1)
+  mtm_trailing_point   Int     @default(1)
+  user                 User?   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id         String   @id @default(cuid())
+  user_id    String
+  ref_id     String   @unique
+  amount     Int
+  date       DateTime @default(now())
+  status     String
+  event_type String //create an enum
+  user       User     @relation(fields: [user_id], references: [id], onDelete: NoAction)
+}
+
+enum Broker {
+  UPSTOCKS
+  DHAN
+  ANGEL
+  ESPRESSO
+}
+
+enum Role {
+  USER
+  ADMIN
+}

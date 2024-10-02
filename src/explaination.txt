@@ -1,0 +1,458 @@
+I am building a trading platform 
+It will use brokers data and APIs to place trades and do other functions 
+
+tech stack : node ts prisma express , react ts tailwind
+
+The app will be server heavy 
+it will have a trading console which the user will use to trade 
+the app will be broker agnostic and will be able to be used with any broker
+
+I am starting to write the code for server
+
+this is the schema for the database (at least for now, might change later)
+schema:""
+
+I want the server to be as fast as possible and be as reliable as possible
+so I am thinking that the it shoul be object oriented
+so for everything that needs to be done, we can create a class and use the class methods and variables 
+and it will be stateful and will use class variables to store data and methods to do stuff so that it wont do db queries every time
+
+so lets start with USER class 
+.
+.
+.
+
+Lets get started with accounts 
+as i said this is a broker agnostic trading platform 
+so users can add their trading account of any broker and start trading into them 
+they can place order, cancel orders, get funds, etc
+but each broker have a different way to store data, different api structures, differen names for same tradablle instruments and instrument tokens that we need to send to do stuff 
+for example, FOR UPSTOCKS and zerodha or any other broker we need to send the token of the stock that we want to trade
+but the same instrument can have different tokens on different brokers and the way broker api do auth can also be differentt 
+
+so how do u seggest we tackel this
+
+
+.
+.
+.
+
+how about this,
+we create a broker class, lets say upstox and only single instance of this class will be created
+it will also hvae a store that will contain all the authenticated accounts of that broker for that day (as in almost all brokers we need to do auth daily once to generate access token for the day).
+s othat it will reduce db calls to fetch account details and access token that we need to do stuff
+
+https://api.upstox.com/v2/login/authorization/dialog?response_type=code&client_id=a6bd03e8-4a4d-489a-8abd-87835e70aea0&redirect_uri=http://localhost:3000/api/upstox/auth&state=MASTER:k2
+
+https://api.upstox.com/v2/login/authorization/dialog?response_type=code&client_id=2e0b8a78-894d-4eab-b446-42f9f9484066&redirect_uri=http://localhost:3000/api/upstox/auth&state=CHILD:c1
+
+now lets work on a class that will  be responcible for placing orders and maintaining order book and positions of master accounts
+it will recive account id and required data for order in the base format 
+it will get which broker the account belong from account manager and place order in thaat 
+it will also responsible for copying orders and every other action in the child account
+we do get order book for a single account from brokers but we need to maintain a coustom order book that will also contain orders from its child accounts 
+we can have multiple child accounts for a single master account
+
+we dont want to copy the whole order book of child account just the order ids
+orderbook -> account id : {...order book converteeed to base format, child orders : {child order ids}}
+
+although we need the full position of child for positions not just order ids and order id might change in case of multiple order in the same instrument 
+position -> account id : {...position converteeed to base format, child positions : {child positions}}
+
+
+https://kite.zerodha.com/connect/login?v=3&api_key=wmdvpcvumovceox1
+Trading00555@#
+
+{
+    "instrument_token":"3050241",
+    "exchange_token":"11915",
+    "tradingsymbol":"YESBANK",
+    "name":"YES BANK",
+    "last_price":"0",
+    "expiry":"",
+    "strike":"0",
+    "tick_size":"0.01",
+    "lot_size":"1",
+    "instrument_type":"EQ",
+    "segment":"NSE",
+    "exchange":"NSE"
+},
+
+{
+    "instrument_token":"14988290",
+    "exchange_token":"58548",
+    "tradingsymbol":"NIFTY24O0325800CE",
+    "name":"NIFTY",
+    "last_price":"0",
+    "expiry":"2024-10-03",
+    "strike":"25800",
+    "tick_size":"0.05",
+    "lot_size":"25",
+    "instrument_type":"CE",
+    "segment":"NFO-OPT",
+    "exchange":"NFO"
+},
+
+
+{
+"accountId":"MASTER:k2",
+"baseInstrument":"BANKNIFTY", 
+"instrumentType":"OPT",
+"expiry":"2024-11-27", 
+"strike":"43000.0", 
+"optionType":"CE", 
+"exchange":"NSE", 
+"qty":15, 
+"orderType":"MARKET", 
+"side":"BUY", 
+"productType":"D"
+}
+
+
+ public async getPosition(accountId: string) {
+    const account = UpstoxBroker.authenticatedAccounts.get(accountId);
+    if (!account) {
+      throw new Error('Account not authenticated');
+    }
+
+    let config = {
+      method: 'get',
+    maxBodyLength: Infinity,
+      url: 'https://api.upstox.com/v2/portfolio/short-term-positions',
+      headers: { 
+        Accept: "application/json",
+        Authorization: `Bearer ${account.accessToken}`,
+      }
+    };
+    
+    const response =await axios(config)
+    const positions = response.data.data;
+    //convert to base
+    const convertedPositions = positions.map(position => {
+      let instrumentType ;
+      if(position.exchange === "NFO"){
+        instrumentType = "OPT";
+      }
+      return {
+        netQty: position.quantity,                       // Net Qty
+        symbolName: position.trading_symbol,             // Symbol name
+        baseInstrument: position.base_instrument,        // Base Instrument
+        instrumentType: position.instrument_type,       // Instrument Type
+        expiry: position.expiry,                         // Expiry
+        strike: position.strike,                         // Strike
+        optionType: position.option_type,                // Option Type
+        exchange: position.exchange==="NFO" || position.exchange==="NSE"?"NSE":null,                     // Exchange
+        action: null,                                    // Action (Buy/Sell based on qty)
+        pnl: position.pnl,                               // PnL
+        ltp: position.last_price,                        // LTP
+        avgPrice: position.average_price,                // Avg Price
+        sl: null,                                        // SL (manual entry)
+        setSl: null,                                     // Set SL (manual entry)
+        target: null,                                    // Target (manual entry)
+        setTarget: null,                                 // Set Target (manual entry)
+        buyPrice: position.buy_price,                    // Buy Price
+        sellPrice: position.sell_price,                  // Sell Price
+        buyQty: position.day_buy_quantity,               // Buy Qty
+        sellQty: position.day_sell_quantity,             // Sell Qty
+        realisedPnL: position.realised,                  // Realised P&L
+        unrealisedPnL: position.unrealised,              // Unrealised P&L
+        side: position.quantity > 0 ? "BUY" : "SELL",    // Side
+        product: position.product                        // Product
+      }
+    });
+    // return base 
+    return convertedPositions;
+  }
+
+
+
+
+
+  Ticks [
+  {
+    tradable: true,
+    mode: 'full',
+    instrument_token: 779521,
+    last_price: 787.75,
+    last_traded_quantity: 5,
+    average_traded_price: 792.7,
+    volume_traded: 12738857,
+    total_buy_quantity: 576209,
+    total_sell_quantity: 900515,
+    ohlc: { open: 801.9, high: 802.6, low: 786.5, close: 802.65 },
+    change: -1.8563508378496203,
+    last_trade_time: 2024-09-30T09:42:02.000Z,
+    exchange_timestamp: 2024-09-30T09:42:02.000Z,
+    oi: 0,
+    oi_day_high: 0,
+    oi_day_low: 0,
+    depth: { buy: [Array], sell: [Array] }
+  },
+  {
+    tradable: true,
+    mode: 'full',
+    instrument_token: 415745,
+    last_price: 180.45,
+    last_traded_quantity: 2,
+  },
+  {
+    tradable: true,
+    mode: 'full',
+    instrument_token: 738561,
+    last_price: 2952.7,
+    last_traded_quantity: 39,
+    average_traded_price: 2981.99,
+    volume_traded: 11432045,
+    total_buy_quantity: 333951,
+    total_sell_quantity: 574257,
+    ohlc: { open: 3038.8, high: 3049.95, low: 2951, close: 3052.35 },  
+    change: -3.264697691942277,
+    last_trade_time: 2024-09-30T09:42:02.000Z,
+    exchange_timestamp: 2024-09-30T09:42:02.000Z,
+    oi: 0,
+    oi_day_high: 0,
+    oi_day_low: 0,
+    depth: { buy: [Array], sell: [Array] }
+  }
+]
+Ticks [
+  {
+    tradable: true,
+    mode: 'full',
+    instrument_token: 738561,
+    last_price: 2952.65,
+    last_traded_quantity: 50,
+    average_traded_price: 2981.99,
+    volume_traded: 11432045,
+    total_buy_quantity: 333951,
+    total_sell_quantity: 574257,
+    ohlc: { open: 3038.8, high: 3049.95, low: 2951, close: 3052.35 },  
+    change: -3.2663357740757064,
+    last_trade_time: 2024-09-30T09:42:02.000Z,
+    exchange_timestamp: 2024-09-30T09:42:03.000Z,
+    oi: 0,
+    oi_day_high: 0,
+    oi_day_low: 0,
+    depth: { buy: [Array], sell: [Array] }
+  }
+]
+Ticks [
+  {
+    tradable: true,
+    mode: 'full',
+    instrument_token: 779521,
+    last_price: 787.75,
+    last_traded_quantity: 1,
+    average_traded_price: 792.7,
+    volume_traded: 12738857,
+    total_buy_quantity: 576209,
+    total_sell_quantity: 900515,
+    ohlc: { open: 801.9, high: 802.6, low: 786.5, close: 802.65 },     
+    change: -1.8563508378496203,
+    last_trade_time: 2024-09-30T09:42:02.000Z,
+    exchange_timestamp: 2024-09-30T09:42:03.000Z,
+    oi: 0,
+    oi_day_high: 0,
+    oi_day_low: 0,
+    depth: { buy: [Array], sell: [Array] }
+  }
+]
+Ticks [
+  {
+    tradable: true,
+    mode: 'full',
+    instrument_token: 415745,
+    last_price: 180.45,
+    last_traded_quantity: 41,
+    average_traded_price: 179.79,
+    volume_traded: 30328721,
+    total_buy_quantity: 2003359,
+    total_sell_quantity: 5160342,
+    ohlc: { open: 179.71, high: 182.46, low: 176.17, close: 180.01 },  
+    change: 0.24443086495194585,
+    last_trade_time: 2024-09-30T09:42:02.000Z,
+    exchange_timestamp: 2024-09-30T09:42:03.000Z,
+    oi: 0,
+    oi_day_high: 0,
+    oi_day_low: 0,
+    depth: { buy: [Array], sell: [Array] }
+  }
+]
+Ticks [
+  {
+    tradable: true,
+    mode: 'full',
+    instrument_token: 415745,
+    last_price: 180.43,
+    last_traded_quantity: 281,
+    average_traded_price: 179.79,
+    volume_traded: 30343209,
+    total_buy_quantity: 1963021,
+    total_sell_quantity: 5146016,
+    ohlc: { open: 179.71, high: 182.46, low: 176.17, close: 180.01 },  
+    change: 0.23332037109050383,
+    last_trade_time: 2024-09-30T09:42:03.000Z,
+    exchange_timestamp: 2024-09-30T09:42:03.000Z,
+    oi: 0,
+    oi_day_high: 0,
+    oi_day_low: 0,
+    depth: { buy: [Array], sell: [Array] }
+  },
+  {
+    tradable: true,
+    mode: 'full',
+    instrument_token: 738561,
+    last_price: 2952.7,
+    last_traded_quantity: 2,
+    average_traded_price: 2981.99,
+    volume_traded: 11432453,
+    total_buy_quantity: 335606,
+    total_sell_quantity: 574447,
+    ohlc: { open: 3038.8, high: 3049.95, low: 2951, close: 3052.35 },  
+    change: -3.264697691942277,
+    last_trade_time: 2024-09-30T09:42:03.000Z,
+    exchange_timestamp: 2024-09-30T09:42:04.000Z,
+    oi: 0,
+    oi_day_high: 0,
+    oi_day_low: 0,
+    depth: { buy: [Array], sell: [Array] }
+  },
+  {
+    tradable: true,
+    mode: 'full',
+    instrument_token: 779521,
+    last_price: 787.75,
+    last_traded_quantity: 114,
+    average_traded_price: 792.7,
+    volume_traded: 12739425,
+    total_buy_quantity: 565740,
+    total_sell_quantity: 883413,
+    ohlc: { open: 801.9, high: 802.6, low: 786.5, close: 802.65 },     
+    change: -1.8563508378496203,
+    last_trade_time: 2024-09-30T09:42:03.000Z,
+    exchange_timestamp: 2024-09-30T09:42:03.000Z,
+    oi: 0,
+    oi_day_high: 0,
+    oi_day_low: 0,
+    depth: { buy: [Array], sell: [Array] }
+  }
+]
+Ticks [
+  {
+    tradable: true,
+    mode: 'full',
+    instrument_token: 779521,
+    last_price: 787.75,
+    last_traded_quantity: 50,
+    average_traded_price: 792.7,
+    volume_traded: 12739425,
+    total_buy_quantity: 565740,
+    total_sell_quantity: 883413,
+    ohlc: { open: 801.9, high: 802.6, low: 786.5, close: 802.65 },     
+    change: -1.8563508378496203,
+    last_trade_time: 2024-09-30T09:42:03.000Z,
+    exchange_timestamp: 2024-09-30T09:42:04.000Z,
+    oi: 0,
+    oi_day_high: 0,
+    oi_day_low: 0,
+    depth: { buy: [Array], sell: [Array] }
+  }
+]
+
+
+
+
+async function fetchInstruments(api_key: string, access_token: string) {
+    try {
+        // Fetch instrument list
+        const instrumentResponse = await axios.get('https://api.kite.trade/instruments', {
+            responseType: 'arraybuffer', // Ensure response is in binary format
+            headers: {
+                'X-Kite-Version': '3',
+                'Authorization': `token ${api_key}:${access_token}`
+            }
+        });
+
+        const encoding = instrumentResponse.headers['content-encoding'];
+        let csvString = '';
+
+        if (encoding && encoding.includes('gzip')) {
+            // Decompress gzipped response
+            const decompressedData = await new Promise<Buffer>((resolve, reject) => {
+                zlib.gunzip(instrumentResponse.data, (err, result) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    resolve(result);
+                });
+            });
+            csvString = decompressedData.toString('utf-8');
+        } else {
+            // No need to decompress, handle as regular CSV
+            csvString = instrumentResponse.data.toString('utf-8');
+        }
+
+        // Convert CSV to JSON
+        const instrumentJsonArray = await csv().fromString(csvString);
+        return instrumentJsonArray;
+
+    } catch (err) {
+        console.error("Error fetching instruments:", err);
+        throw new Error("Failed to fetch instruments");
+    }
+}
+
+
+
+
+
+import { useState, useEffect } from 'react';
+import io from 'socket.io-client';
+import reactLogo from './assets/react.svg';
+import viteLogo from '/vite.svg';
+import './App.css';
+
+const socket = io('http://localhost:4001'); // Update the URL to your socket server if needed
+
+function App() {
+  const [count, setCount] = useState(0);
+  const [marketData, setMarketData] = useState<any>({}); // Array for storing market ticks
+  const [tokenValue, setTokenValue] = useState('');
+  const subsribeToken = (token: string)=>{
+    socket.emit('subscribe', token);
+  }
+  useEffect(() => {
+    // Listening to marketData event from the WebSocket
+    socket.on('marketData', (data) => {
+      // Assuming data is received as an array of ticks
+      setMarketData((prev:any)=>{
+        return {...prev, [data.instrument_token]: data}
+      }); // Append new data to existing market data
+      console.log(data);
+    });
+
+    return () => {
+      socket.off('marketData'); // Cleanup listener on unmount
+    };
+  }, []);
+
+  return (
+    <>
+      
+
+      {/* Market Feed Section */}
+      <h2>Market Feed</h2>
+      <div className="market-feed">
+        {Object.keys(marketData).map((key) => (
+          <div key={key} className="market-item">
+            <p>{key} : {JSON.stringify(marketData[key])}</p>
+          </div>
+        ))}
+      </div>
+      <input type="text" placeholder="Instrument Token" value={tokenValue} onChange={(e) => setTokenValue(e.target.value)} />
+      <button onClick={() => subsribeToken(tokenValue)}>Subscribe</button>
+    </>
+  );
+}
+
+export default App;
