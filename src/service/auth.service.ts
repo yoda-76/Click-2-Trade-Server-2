@@ -8,8 +8,11 @@ class AuthService {
   usersByEmail: { [key: string]: User } = {};
 
   async register(name: string, email: string, password: string, ph_number: string) {
+    ph_number="1234567890"
+    console.log(name, email, password, ph_number);
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await dbClient.createUser({ name, email, password: hashedPassword, ph_number, role: 'USER' });
+    await dbClient.createUserPrefrences(user.id); 
     this.usersByEmail[email] = user;
     return user;
   }

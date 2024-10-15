@@ -3,7 +3,7 @@ import { UpstoxBroker } from "../brokers/upstox.service";
 
 export class AccountManager {
     private static instance: AccountManager;
-    private authenticatedAccounts: Map<string, { id: string, accessToken: string, expiresAt: Date, broker: "UPSTOCKS" | "DHAN" | "ANGEL" | "ESPRESSO" }> = new Map();
+    private authenticatedAccounts: Map<string, { id: string, user_id: string, type: "MASTER" | "CHILD", master_id: string, broker_id: string, key: string, accessToken: string, expiresAt: Date, broker: "UPSTOCKS" | "DHAN" | "ANGEL" | "ESPRESSO" }> = new Map();
   
     // Private constructor to prevent direct instantiation
     private constructor() {}
@@ -17,13 +17,18 @@ export class AccountManager {
     }
   
     // Add authenticated account in in-memory store
-    public addAuthenticatedAccount( accountId: string, id: string, accessToken: string, broker: "UPSTOCKS" | "DHAN" | "ANGEL" | "ESPRESSO") {
+    public addAuthenticatedAccount(user_id: string, master_id: string, type: "MASTER" | "CHILD", key: string, broker_id: string, accountId: string, id: string, accessToken: string, broker: "UPSTOCKS" | "DHAN" | "ANGEL" | "ESPRESSO") {
       const expiresAt = new Date(Date.now() + 3600 * 1000); // Assuming 1 hour expiry
       this.authenticatedAccounts.set(accountId, {
         id,
+        user_id,
+        key,
         accessToken,
         expiresAt,
-        broker
+        broker,
+        broker_id,
+        type,
+        master_id
         //add active chind accounts too to reduce db calls
       });
     }
@@ -82,13 +87,35 @@ export class AccountManager {
        }
     }
 
+    public async deleteMasterAccount(accountId: string) {
+      const account = this.authenticatedAccounts.get(accountId);
+      if (!account || account.expiresAt < new Date()) {
+        throw new Error('Account not authenticated');
+      }
+      await dbClient.deleteMasterAccount(account.id);
+      this.authenticatedAccounts.delete(accountId);
+      return true;
+    }
+
+    public async deleteChildAccount(accountId: string) {
+      const account = this.authenticatedAccounts.get(accountId);
+      if (!account || account.expiresAt < new Date()) {
+        throw new Error('Account not authenticated');
+      }
+      await dbClient.deleteChildAccount(account.id);
+      this.authenticatedAccounts.delete(accountId);
+      return true;
+    }
+
     //get funds
     public async getFunds(accountId: string): Promise<any> {
      try {
-      console.log(accountId);
+      // console.log("accountId", accountId);
       const account = this.authenticatedAccounts.get(accountId);
-      console.log(account);
+      // console.log(account);
       if (!account || account.expiresAt < new Date()) {
+        // const allAccounts = this.getAllAuthenticatedAccountsAsObject();
+        // console.log(allAccounts);
         throw new Error('Account not authenticated');
       }
       if(account.broker === "UPSTOCKS"){

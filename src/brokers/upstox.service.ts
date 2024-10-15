@@ -18,7 +18,7 @@ export class UpstoxBroker {
   private static authenticatedAccounts: Map<string, { accessToken: string, expiresAt: Date }> = new Map();
   private static instance: UpstoxBroker | null = null;
   private instrumentData: Record<string, any> = {};  // In-memory store for instrument data
-  private tokenToBeSubscribed: string[] = [];  // Token to be subscribed to for order updates
+  private tokenToBeSubscribed: number[] = [];  // Token to be subscribed to for order updates
   private instrumentDataSearchMap: Map<string, any> = new Map();  // In-memory store for instrument data
 
   // Singleton pattern
@@ -34,7 +34,7 @@ export class UpstoxBroker {
   }
 
   public getInstrumentDataAsObject() {
-    console.log(this.instrumentData);
+    // console.log(this.instrumentData);
     return this.instrumentData;
   }
 
@@ -48,11 +48,15 @@ export class UpstoxBroker {
     try {
       const currentdate = new Date();
       const acc = extractId(id); // Function to extract ID and determine type (MASTER/CHILD)
+      let user_id: string = "";
+      let master_id: string = "";
       let userData: MasterAccount | ChildAccount;
       if (acc.type === "CHILD") {
         userData = await dbClient.getChildAccountByUid(acc.id);
+        master_id = userData.master_id;
       } else if (acc.type === "MASTER") {
         userData = await dbClient.getMasterAccountByUid(acc.id);
+        user_id = userData.user_id;
       } else {
         throw new Error( "Error authorizing with Upstox : .Controllers/Authorization: handleWebhook");
       }
@@ -77,16 +81,17 @@ export class UpstoxBroker {
 
       // Process the response
       const access_token: string = response.data.access_token;
-
+      let account;
       // Store the access token in-memory and update DB
       if (acc.type === "MASTER") {
         await dbClient.updateMasterAccessTokenByUid(acc.id, { access_token, last_token_generated_at: currentdate });
+        
       } else {
         await dbClient.updateChildAccessTokenByUid(acc.id, { access_token, last_token_generated_at: currentdate });
       }
-      // Get the singleton instance of AccountManager and add the account
       const accountManager = AccountManager.getInstance();
-      accountManager.addAuthenticatedAccount(id, userData.id, access_token, "UPSTOCKS");
+      accountManager.addAuthenticatedAccount(user_id, master_id, "MASTER", userData.key, userData.broker_id, id, userData.id, access_token, "UPSTOCKS");
+      // Get the singleton instance of AccountManager and add the account
       console.log("Access token for account stored successfully.");
       return `Access token for account ${id} stored successfully.`
     } catch (error) {
@@ -119,12 +124,14 @@ export class UpstoxBroker {
           throw new Error('Account not authenticated');
         }
         const { baseInstrument, instrumentType, expiry, strike, optionType, exchange, qty, price, triggerPrice, orderType, side, productType } = orderDetails;
+        console.log(orderDetails);
         let key="";
         if(exchange === "BSE"){
           throw new Error('BSE not supported');
         }
         if(instrumentType === "OPT"){
-          key=  this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}`][optionType].instrument_key
+          console.log(this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.0`][optionType]);
+          key=  this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.0`][optionType].instrument_key
         }else if(instrumentType === "EQ"){
           key=  this.instrumentData.NSE.EQUITY[baseInstrument].instrument_key
         }else if(instrumentType === "FUT"){
@@ -135,33 +142,8 @@ export class UpstoxBroker {
 
         const slicedQty = sliceOrderQuantity(qty, baseInstrument);
     
-        // console.log(41, slicedQty, accountDetails.access_token);
-        // console.log("order: ",{
-        //   quantity: slicedQty,
-        //   product: productType,
-        //   validity: "DAY",
-        //   price: orderType === "LIMIT" ? price : 0,
-        //   tag: "string",
-        //   instrument_token: key,
-        //   order_type: orderType,
-        //   transaction_type: side,
-        //   disclosed_quantity: 0,
-        //   trigger_price: triggerPrice?triggerPrice:0,
-        //   is_amo: false,
-        // }, );
-        // const orderBodyWithoutQuantity = {
-        //   product: productType,
-        //   validity: "DAY",
-        //   price: orderType === "LIMIT" ? price : 0,
-        //   tag: "string",
-        //   instrument_token: key,
-        //   order_type: orderType,
-        //   transaction_type: side,
-        //   disclosed_quantity: 0,
-        //   trigger_price: triggerPrice?triggerPrice:0,
-        //   is_amo: true,
-        // }
-    
+
+        console.log(slicedQty);
         for (let i = 0; i < slicedQty.length; i++) {
           let config = {
             url: "https://api.upstox.com/v2/order/place",
@@ -181,13 +163,14 @@ export class UpstoxBroker {
               order_type: orderType,
               transaction_type: side,
               disclosed_quantity: 0,
-              trigger_price: triggerPrice?triggerPrice:0,
-              is_amo: true,
+              trigger_price: triggerPrice,
+              is_amo: false,
             },
           };
           //check if the quantity exceeds the freeze quqntity for that perticular index? if it does, then slice the order
     
           const response = await axios(config);
+          console.log(response);
           return response.data.data.order_id;
         }
         return true;
@@ -305,8 +288,10 @@ export class UpstoxBroker {
 
   public async getPositions(accountId: string) {
       try {
+        console.log(accountId);
         const accountManager = AccountManager.getInstance();
         const access_token = accountManager.getAccessToken(accountId);
+        console.log("at",access_token);
         let config = {
           method: 'get',
         maxBodyLength: Infinity,
@@ -317,6 +302,7 @@ export class UpstoxBroker {
           }
         };
         const response = await axios(config)
+        console.log("position from broker",response.data.data);
         let convertedPositions = response.data.data.map((position) => {
           const symbolName = position.trading_symbol
           const symbolDetails = this.instrumentDataSearchMap[symbolName]
@@ -325,6 +311,7 @@ export class UpstoxBroker {
             symbolName: position.trading_symbol,             // Symbol name
             baseInstrument: symbolDetails.name,                   // Base Instrument
             instrumentType: symbolDetails.instrument_type,       // Instrument Type
+            optionType: symbolDetails.option_type,              //option type
             expiry: symbolDetails.expiry,                            // Expiry
             strike: symbolDetails.strike,                  // Option Type
             ltpToken: symbolDetails.ltpToken?symbolDetails.ltpToken:null,                        // LTP Token
@@ -347,6 +334,7 @@ export class UpstoxBroker {
             product: position.product                        // Product
           }
         })
+        console.log("cp",convertedPositions);
         return convertedPositions
       } catch (error) {
         
@@ -530,17 +518,29 @@ export class UpstoxBroker {
         structuredData.NSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`][instrument.instrument_type].ltpToken = instrument.instrument_token;
 
         //add ltp token to subscribed instruments list
-        this.tokenToBeSubscribed.push(instrument.instrument_token);
+        this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
         //create a map with symbol from broker as key and info from broker + info from kite as value
         const upstoxData = structuredData.NSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`][instrument.instrument_type];
         this.instrumentDataSearchMap[upstoxData.tradingsymbol] ={...upstoxData, ...instrument}; 
         
       }else if( instrument.segment === "INDICES" && instrument.exchange === "NSE" && (instrument.name === "NIFTY 50" || instrument.name === "NIFTY BANK" || instrument.name === "NIFTY FIN SERVICE")){
-        if (instrument.name === "NIFTY 50") structuredData.NSE.INDEX.NIFTY.ltpToken = instrument.instrument_token;
-        if (instrument.name === "NIFTY BANK") structuredData.NSE.INDEX.BANKNIFTY.ltpToken = instrument.instrument_token;
-        if (instrument.name === "NIFTY FIN SERVICE") structuredData.NSE.INDEX.FINNIFTY.ltpToken = instrument.instrument_token;
+        if (instrument.name === "NIFTY 50") {
+          structuredData.NSE.INDEX.NIFTY.ltpToken = instrument.instrument_token;
+          this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        }
+        if (instrument.name === "NIFTY BANK"){
+          structuredData.NSE.INDEX.BANKNIFTY.ltpToken = instrument.instrument_token;
+          this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        }
+        if (instrument.name === "NIFTY FIN SERVICE") {
+          structuredData.NSE.INDEX.FINNIFTY.ltpToken = instrument.instrument_token;
+          this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        }
       }else if(instrument.segment === "NSE" && instrument.instrument_type === "EQ" &&structuredData.NSE.EQUITY[instrument.tradingsymbol]){
         structuredData.NSE.EQUITY[instrument.tradingsymbol].ltpToken = instrument.instrument_token;
+        this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        
+
       }
     })
 
@@ -550,6 +550,10 @@ export class UpstoxBroker {
   // Get instrument from memory
   public getInstrument(base: string, expiry: string, strike: number, side: string): any {
     return this.instrumentData?.[base]?.[`${expiry} : ${strike}`]?.[side] || null;
+  }
+
+  public getTokensToBeSubscribed() {
+    return this.tokenToBeSubscribed;
   }
 
   //Get funds of an upstox account

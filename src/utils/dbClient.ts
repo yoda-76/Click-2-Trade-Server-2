@@ -23,6 +23,27 @@ class DBClient {
     });
   }
 
+  async createUserPrefrences(id: string) {
+    return prisma.prefrences.create({
+      data: {
+        user_id: id,
+      },
+    });
+  }
+
+  async updateUserPrefrencesById(id: string, data: User) {
+    return prisma.prefrences.update({
+      where: { user_id: id },
+      data,
+    });
+  }
+
+  async getUserPrefrencesById(id: string) {
+    return prisma.prefrences.findUnique({
+      where: { user_id: id },
+    });
+  }
+
   // master account
   async createMasterAccount(
     user_id: string,
@@ -46,6 +67,12 @@ class DBClient {
     } catch (error) {
       console.log(error);
     }
+  }
+
+  async deleteMasterAccount(id: string) {
+    return prisma.masterAccount.delete({
+      where: { id },
+    });
   }
 
   async updateMasterAccountByUid(u_id: string, data: MasterAccount) {
@@ -84,6 +111,11 @@ class DBClient {
     return prisma.masterAccount.findMany();
   }
 
+  async getMasterAccountsByUserId(user_id: string) {
+    return prisma.masterAccount.findMany({
+      where: { user_id },
+    });
+  }
 
 
   // child account
@@ -118,6 +150,12 @@ class DBClient {
     }
   }
 
+  async deleteChildAccount(id: string) {
+    return prisma.childAccount.delete({
+      where: { id },
+    });
+  }
+
   async updateChildAccountByUid(u_id: string, data: ChildAccount) {
     return prisma.childAccount.update({
       where: { u_id },
@@ -125,7 +163,7 @@ class DBClient {
     });
   }
 
-  async updateChildAccountById(id: string, data: ChildAccount) {
+  async updateChildAccountById(id: string, data) {
     return prisma.childAccount.update({
       where: { id },
       data,
@@ -159,6 +197,23 @@ class DBClient {
   
   async getChildAccounts() {
     return prisma.childAccount.findMany();
+  }
+
+  async persistOrderbook(accountId: string, orderId: string, orderDetails: any, childOrders: any): Promise<void> {
+    await prisma.orderBook.upsert({
+      where:{order_id: orderId},
+      create:{
+        account_id: accountId,
+        order_id: orderId,
+        order_details: orderDetails,
+        child_orders: childOrders 
+      },
+      update:{
+        order_details: orderDetails,
+        child_orders: childOrders
+      }
+    })
+    //save to db
   }
 }
 

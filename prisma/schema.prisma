@@ -61,21 +61,21 @@ model ChildAccount {
 }
 
 model OrderBook {
-  id          Int      @id @default(autoincrement())
-  accountId   String   // Account ID (Foreign Key)
-  orderId     String   @unique // Unique order ID
-  orderDetails Json    // Order details stored as JSON
-  childOrders Json     // Child orders stored as JSON array
-  createdAt   DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  account_id    String // Account ID (Foreign Key)
+  order_id      String   @unique // Unique order ID
+  order_details Json // Order details stored as JSON
+  child_orders  Json // Child orders stored as JSON array
+  created_at    DateTime @default(now())
 }
 
 model Position {
-  id             Int      @id @default(autoincrement())
-  accountId      String   // Account ID (Foreign Key)
-  symbol         String   // Symbol Name
-  positionDetails Json    // Position details stored as JSON
-  tracked        Boolean  // Whether this position is tracked or untracked
-  createdAt      DateTime @default(now())
+  id               Int      @id @default(autoincrement())
+  account_id       String // Account ID (Foreign Key)
+  symbol           String // Symbol Name
+  position_details Json // Position details stored as JSON
+  tracked          Boolean // Whether this position is tracked or untracked
+  created_at       DateTime @default(now())
 }
 
 model Prefrences {

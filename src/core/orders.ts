@@ -59,19 +59,15 @@ export class OrderManager {
     const orderDetailsFromBroker  = await this.getOrderDetailsByOrderId(accountId, orderId, broker); 
     this.addOrderToOrderBook(accountId, orderId, orderDetailsFromBroker);
 
-    // const position = await this.getPositionByOrderDetails(accountId, orderDetails);
-    // this.updatePositions(accountId, position);
-    //get base-formated positions with orderDetails from client and instrument token from kiet socket
-    //save them 
-
     // Copy order to child accounts
     const id = accountManager.getAuthenticatedAccountId(accountId);
     const childAccounts = await dbClient.getChildAccountsByMasterId(id);
     for (const childAccount of childAccounts) {
+      if (!childAccount.active) continue;
       const childAccountId = `CHILD:${childAccount.u_id}`;
       const childAccountDetails = accountManager.getAuthenticatedAccountId(childAccountId);
       if(!childAccountDetails) continue;
-      console.log("object111");
+      orderDetails.qty = orderDetails.qty * childAccount.multiplier;
       const childOrderId = await this.placeOrderInBroker(`CHILD:${childAccount.u_id}`, orderDetails, broker);
       this.addChildOrderToOrderBook(accountId, `CHILD:${childAccount.u_id}`, orderId, childOrderId);
     }
@@ -132,6 +128,9 @@ export class OrderManager {
       orderDetails,
       childOrders: []
     };
+
+    //save to db
+    this.persistOrderbook(accountId);
   }
 
   // Add child order to existing master order in the order book
@@ -207,34 +206,66 @@ export class OrderManager {
     return {};
   }
 
+  private async persistOrderbook(accountId: string): Promise<void> {
+    const accountOrders = this.customOrderBook[accountId]?.orders;
+    if (accountOrders) {
+      this.customOrderBook[accountId].orders = accountOrders;
+    }
+    Object.keys(accountOrders).forEach(async (key) => {
+      const orderDetails = accountOrders[key].orderDetails;
+      const childOrders = accountOrders[key].childOrders;
+      await dbClient.persistOrderbook(accountId, key, orderDetails, childOrders);
+    })
+    //save to db
+
+  }
+
   // Exit a single position based on account ID and instrument identifier
-  public async exitSinglePosition(accountId: string, instrumentId: string, symbol: string): Promise<void> {
-    // For now instrumentId will recive ltpToken
+  public async exitSinglePosition(accountId: string, position: any): Promise<void> {
     const accountManager = AccountManager.getInstance();
     const broker = accountManager.getBroker(accountId);
-
-    //fetch the position
-    const positions = await this.customPosition[accountId].trackedPositions[symbol];
-    const exitOrderDetails:OrderDetails = { 
-      baseInstrument: positions.baseInstrument, 
-      instrumentType: positions.instrumentType, 
-      expiry: positions.expiry, 
-      strike: positions.strike, 
-      optionType: positions.optionType, 
-      exchange: positions.exchange, 
-      qty: positions.qty, 
-      price: null, 
-      triggerPrice: null, 
+    if(position.netQty === 0 || position.netQty === "0" ) return;
+    //convert position into orderDetail
+    const orderDetails: OrderDetails = {
+      baseInstrument: position.baseInstrument,
+      instrumentType: position.instrumentType==="PE" || position.instrumentType==="CE" ? "OPT" : "EQ",
+      expiry: position.expiry,
+      strike: position.strike,
+      optionType: position.optionType,
+      exchange: position.exchange,
+      qty: position.netQty, 
+      price: 0, 
+      triggerPrice: 0, 
       orderType: "MARKET", 
-      side: positions.qty > 0 ? "SELL" : "BUY", 
-      productType: positions.product };
-    const order = this.placeOrder(accountId, exitOrderDetails);
-    
+      side: position.netQty<0?"BUY":"SELL",
+      productType: position.product
+    }
+    const order = this.placeOrder(accountId, orderDetails);
   }
 
   // Exit all positions for master and child accounts
   public async exitAllPositions(accountId: string): Promise<void> {
-    // Implement logic to exit all positions using broker API
+    const accountManager = AccountManager.getInstance();
+    const broker = accountManager.getBroker(accountId);
+    const positions = await this.getPositions(accountId);
+    for(const position of positions){
+      if(position.netQty==0 || position.netQty == "0") continue;
+      const orderDetails: OrderDetails = {
+        baseInstrument: position.baseInstrument,
+        instrumentType: (position.instrumentType==="CE"||position.instrumentType==="PE")?"OPT":position.instrumentType,
+        expiry: position.expiry,
+        strike: position.strike,
+        optionType: position.optionType,
+        exchange: position.exchange,
+        qty: position.netQty, 
+        price: 0, 
+        triggerPrice: 0, 
+        orderType: "MARKET", 
+        side: position.netQty<0?"BUY":"SELL",
+        productType: position.product
+      }
+      await this.placeOrder(accountId, orderDetails);
+    }
     console.log(`Exiting all positions for account ${accountId}`);
   }
 
@@ -257,7 +288,7 @@ export class OrderManager {
   public async getPositions(accountId: string): Promise<any> {
     // const positions = this.customPosition[accountId].trackedPositions
     const positions:any = await UpstoxBroker.getInstance().getPositions(accountId);
-    console.log(positions);
+    // console.log(positions);
     if (positions) {
       return positions
     }

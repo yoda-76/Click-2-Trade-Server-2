@@ -30,7 +30,7 @@ export async function fetchInstruments(api_key: string, access_token: string) {
         } else {
             // No need to decompress, handle as regular CSV
             csvString = instrumentResponse.data.toString('utf-8');
-        }
+        }   
 
         // Convert CSV to JSON
         const instrumentJsonArray = await csvtojson().fromString(csvString);
