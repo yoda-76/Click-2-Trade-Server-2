@@ -10,5 +10,5 @@ export interface OrderDetails {
   triggerPrice: number | null;
   orderType: "LIMIT" | "MARKET";
   side: "BUY" | "SELL";
-  productType: "D" | "I";
+  productType: "D" | "I" | "INTRADAY" | "MARGIN";
 }

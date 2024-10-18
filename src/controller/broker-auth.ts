@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import axios from 'axios';
 import crypto from 'crypto';
 import { UpstoxBroker } from "../brokers/upstox.service";
+import { DhanBroker } from "../brokers/dhan/dhan.service";
 
 export const upstoxAuth = async (req: Request, res: Response) => {
     const authcode = req.query.code as string;
@@ -10,6 +11,21 @@ export const upstoxAuth = async (req: Request, res: Response) => {
     try {
         const upstoxBroker = UpstoxBroker.getInstance();
         const msg = await upstoxBroker.handleWebhook(id, authcode);
+        res.json({message:msg});
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+}
+
+//dhan
+export const dhanAuth = async (req: Request, res: Response) => {
+    const {id, access_token, dhanClientId} = req.body;
+    try {
+        if(!id || !access_token || !dhanClientId){
+            res.status(400).json({error: "Invalid request."});
+        }
+        const dhanBroker = DhanBroker.getInstance();
+        const msg = await dhanBroker.handleWebhook(id, access_token, dhanClientId);
         res.json({message:msg});
     } catch (error) {
         res.status(400).json({ error: error.message });

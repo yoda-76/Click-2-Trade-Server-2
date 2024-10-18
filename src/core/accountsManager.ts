@@ -1,9 +1,10 @@
 import { dbClient } from "../utils/dbClient";
 import { UpstoxBroker } from "../brokers/upstox.service";
+import { DhanBroker } from "../brokers/dhan/dhan.service";
 
 export class AccountManager {
     private static instance: AccountManager;
-    private authenticatedAccounts: Map<string, { id: string, user_id: string, type: "MASTER" | "CHILD", master_id: string, broker_id: string, key: string, accessToken: string, expiresAt: Date, broker: "UPSTOCKS" | "DHAN" | "ANGEL" | "ESPRESSO" }> = new Map();
+    private authenticatedAccounts: Map<string, { id: string, user_id: string, type: "MASTER" | "CHILD", master_id: string, broker_id: string, key: string, accessToken: string, expiresAt: Date, broker: "UPSTOCKS" | "DHAN" | "ANGEL" | "ESPRESSO" , dhanClientId: string|null}> = new Map();
   
     // Private constructor to prevent direct instantiation
     private constructor() {}
@@ -17,7 +18,7 @@ export class AccountManager {
     }
   
     // Add authenticated account in in-memory store
-    public addAuthenticatedAccount(user_id: string, master_id: string, type: "MASTER" | "CHILD", key: string, broker_id: string, accountId: string, id: string, accessToken: string, broker: "UPSTOCKS" | "DHAN" | "ANGEL" | "ESPRESSO") {
+    public addAuthenticatedAccount(user_id: string, master_id: string, type: "MASTER" | "CHILD", key: string, broker_id: string, accountId: string, id: string, accessToken: string, broker: "UPSTOCKS" | "DHAN" | "ANGEL" | "ESPRESSO", dhanClientId?: string|null) {
       const expiresAt = new Date(Date.now() + 3600 * 1000); // Assuming 1 hour expiry
       this.authenticatedAccounts.set(accountId, {
         id,
@@ -28,7 +29,8 @@ export class AccountManager {
         broker,
         broker_id,
         type,
-        master_id
+        master_id,
+        dhanClientId: dhanClientId?dhanClientId:null
         //add active chind accounts too to reduce db calls
       });
     }
@@ -121,6 +123,11 @@ export class AccountManager {
       if(account.broker === "UPSTOCKS"){
         const upstoxBroker = UpstoxBroker.getInstance();
         const funds = await upstoxBroker.getFunds(account.accessToken);
+        return funds;
+      }else if(account.broker === "DHAN"){
+        const dhanBroker = DhanBroker.getInstance();
+        console.log(account);
+        const funds = await dhanBroker.getFunds(account.accessToken);
         return funds;
       }else{
         throw new Error('Broker not supported');

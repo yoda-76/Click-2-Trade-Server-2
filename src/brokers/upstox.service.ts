@@ -83,14 +83,16 @@ export class UpstoxBroker {
       const access_token: string = response.data.access_token;
       let account;
       // Store the access token in-memory and update DB
+      const accountManager = AccountManager.getInstance();
       if (acc.type === "MASTER") {
         await dbClient.updateMasterAccessTokenByUid(acc.id, { access_token, last_token_generated_at: currentdate });
-        
+      accountManager.addAuthenticatedAccount(user_id, master_id, "MASTER", userData.key, userData.broker_id, id, userData.id, access_token, "UPSTOCKS");
+
       } else {
         await dbClient.updateChildAccessTokenByUid(acc.id, { access_token, last_token_generated_at: currentdate });
+      accountManager.addAuthenticatedAccount(user_id, master_id, "CHILD", userData.key, userData.broker_id, id, userData.id, access_token, "UPSTOCKS");
+
       }
-      const accountManager = AccountManager.getInstance();
-      accountManager.addAuthenticatedAccount(user_id, master_id, "MASTER", userData.key, userData.broker_id, id, userData.id, access_token, "UPSTOCKS");
       // Get the singleton instance of AccountManager and add the account
       console.log("Access token for account stored successfully.");
       return `Access token for account ${id} stored successfully.`
@@ -286,11 +288,8 @@ export class UpstoxBroker {
   }
 
 
-  public async getPositions(accountId: string) {
+  public async getPositions(access_token: string) {
       try {
-        console.log(accountId);
-        const accountManager = AccountManager.getInstance();
-        const access_token = accountManager.getAccessToken(accountId);
         console.log("at",access_token);
         let config = {
           method: 'get',
@@ -565,6 +564,7 @@ export class UpstoxBroker {
       Authorization: `Bearer ${access_token}`,
     };
     const resp = await axios.get(url, { headers })
+    console.log(resp);
     return resp.data.data;
   }
 

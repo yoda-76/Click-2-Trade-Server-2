@@ -2,6 +2,7 @@ import express from "express";
 import routes from "./routes";
 import cookieParser from "cookie-parser";
 import { createServer } from "node:http";
+import { DhanBroker } from "./brokers/dhan/dhan.service";
 
 
 const port = process.env.PORT || 3000;
@@ -37,7 +38,7 @@ app.use((req, res, next) => {
 
   next();
 });
-
+// DhanBroker.getInstance();
 
 app.listen(port, () => {
   console.log(`App is running at http://localhost:${port}`);

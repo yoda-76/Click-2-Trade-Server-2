@@ -2,9 +2,11 @@ import { Express, Request, Response } from "express";
 import {  login, logout, register,  } from "./controller/auth.controller";
 import { authenticate } from "./middleware/authenticate";
 import { addAccount, deleteChildAccount, deleteMasterAccount, getAccounts, getChildAccountByMasterUid, getFunds, toggleChildAccount, updateChildMultiplier } from "./controller/accounts.controller";
-import { upstoxAuth, zerodhaAuth } from "./controller/broker-auth";
+import { dhanAuth, upstoxAuth, zerodhaAuth } from "./controller/broker-auth";
 import { AccountManager } from "./core/accountsManager";
 import { UpstoxBroker } from "./brokers/upstox.service";
+import { DhanBroker } from "./brokers/dhan/dhan.service";
+
 import { cancelAllOrders, cancelOrder, getOrders, placeOrder, squareoffAllPositions, squareoffSinglePositions } from "./controller/order.controller";
 import { getPositions } from "./controller/positions.controller";
 import { getPrefrences, getUserDetails, updatePrefrences } from "./controller/user.controller";
@@ -28,6 +30,7 @@ function routes(app: Express) {
 
   //broker auth
   app.get("/api/upstox/auth", upstoxAuth)
+  app.post("/api/dhan/auth", dhanAuth)
   app.get("/api/kite/auth", zerodhaAuth)
 
   
@@ -99,7 +102,20 @@ function routes(app: Express) {
           const instrumentData = upstoxBroker.getInstrumentDataAsObject();
           res.json(instrumentData);
         })
+
+        app.post("/api/get-dhan-instrumentData", (req: Request, res: Response) => {
+          const dhanBroker = DhanBroker.getInstance();
+          const instrumentData = dhanBroker.getInstrumentDataAsObject();
+          res.json(instrumentData);
+        })
         
+        app.post("/api/get-dhan-instrumentDataSearchMap", (req: Request, res: Response) => {
+          const dhanBroker = DhanBroker.getInstance();
+          const instrumentDataSearchMap = dhanBroker.getInstrumentDataSearchMapAsObject();
+          res.json(instrumentDataSearchMap);
+        })
+
+
         app.get("/api/get-tokens-to-be-subscribed", (req: Request, res: Response) => {
           const upstoxBroker = UpstoxBroker.getInstance();
           const tokens = upstoxBroker.getTokensToBeSubscribed();
@@ -181,20 +197,17 @@ function routes(app: Express) {
   // const data=extractOptionDetails(req.body.symbol)  
   // res.json(data)
   // })
-//   app.post("/api/test-add-acc", async (req: Request, res: Response) => {
-//     const accountManager = AccountManager.getInstance();
+  app.post("/api/test-add-acc", async (req: Request, res: Response) => {
+    const accountManager = AccountManager.getInstance();
     
-//     // Add account
-//     accountManager.addAuthenticatedAccount("test", "test-id", "test-token", "UPSTOCKS");
+    // Retrieve authenticated accounts
+    const accounts = accountManager.getAllAuthenticatedAccountsAsObject();
     
-//     // Retrieve authenticated accounts
-//     const accounts = accountManager.getAllAuthenticatedAccountsAsObject();
+    // Log the accounts map
+    console.log("Authenticated Accounts:", accounts);
     
-//     // Log the accounts map
-//     console.log("Authenticated Accounts:", accounts);
-    
-//     res.json({ data: accounts, msg: "ok" });
-// });
+    res.json({ data: accounts, msg: "ok" });
+});
 
 }
 

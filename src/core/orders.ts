@@ -2,6 +2,7 @@ import { AccountManager } from "./accountsManager";
 import { UpstoxBroker } from "../brokers/upstox.service";
 import { dbClient } from "../utils/dbClient";
 import { OrderDetails } from "../Interface";
+import { DhanBroker } from "../brokers/dhan/dhan.service";
 // Add other broker imports as needed
 
 
@@ -66,9 +67,13 @@ export class OrderManager {
       if (!childAccount.active) continue;
       const childAccountId = `CHILD:${childAccount.u_id}`;
       const childAccountDetails = accountManager.getAuthenticatedAccountId(childAccountId);
+      console.log(childAccountDetails);
       if(!childAccountDetails) continue;
       orderDetails.qty = orderDetails.qty * childAccount.multiplier;
-      const childOrderId = await this.placeOrderInBroker(`CHILD:${childAccount.u_id}`, orderDetails, broker);
+      console.log("----ORDERS IN CHILD ACCOUNT WILL BE----");
+      console.log("orderDetails", orderDetails);
+      // console.log(childAccountDetails);
+      const childOrderId = await this.placeOrderInBroker(`CHILD:${childAccount.u_id}`, orderDetails, childAccount.broker);
       this.addChildOrderToOrderBook(accountId, `CHILD:${childAccount.u_id}`, orderId, childOrderId);
     }
     return 
@@ -89,14 +94,20 @@ export class OrderManager {
   }
 
   private async getOrderDetailsByOrderId(accountId: string, orderId: string, broker: "UPSTOCKS" | "DHAN" | "ANGEL" | "ESPRESSO") {
-
+    let orderDetails;
     switch (broker) {
       case "UPSTOCKS":
         const upstoxBroker = UpstoxBroker.getInstance();
-        const orderDetails = await upstoxBroker.getOrderDetailsByOrderId(accountId, orderId);
+        orderDetails = await upstoxBroker.getOrderDetailsByOrderId(accountId, orderId);
         console.log("order in upstox", orderDetails);
         return orderDetails;
       // Add cases for other brokers
+      case "DHAN":
+        const dhanBroker = DhanBroker.getInstance();
+        orderDetails = await dhanBroker.getOrderDetailsByOrderId(accountId, orderId);
+        console.log("order in dhan", orderDetails);
+        return orderDetails;
+        
       default:
         throw new Error("Broker not supported");
     }
@@ -104,15 +115,26 @@ export class OrderManager {
 
   // Helper method to place order with broker
   private async placeOrderInBroker(accountId: string, orderDetails: OrderDetails, broker: "UPSTOCKS" | "DHAN" | "ANGEL" | "ESPRESSO"): Promise<string> {
-    switch (broker) {
-      case "UPSTOCKS":
-        const upstoxBroker = UpstoxBroker.getInstance();
-        const order_id:string = await upstoxBroker.placeOrder(accountId, orderDetails);
-        console.log("order in upstox");
-        return order_id;
-      // Add cases for other brokers
-      default:
-        throw new Error("Broker not supported");
+    let order_id:string = "";
+    try {
+      switch (broker) {
+        case "UPSTOCKS":
+          const upstoxBroker = UpstoxBroker.getInstance();
+          order_id = await upstoxBroker.placeOrder(accountId, orderDetails);
+          console.log("order in upstox");
+          return order_id;
+        case "DHAN":
+          const dhanBroker = DhanBroker.getInstance();
+          order_id= await dhanBroker.placeOrder(accountId, orderDetails);
+          console.log("order in dhan");
+          return order_id;
+        // Add cases for other brokers
+        default:
+          throw new Error("Broker not supported");
+      }
+      
+    } catch (error) {
+      throw new Error(error);
     }
   }
 
@@ -176,6 +198,9 @@ export class OrderManager {
       case "UPSTOCKS":
         const upstoxBroker = UpstoxBroker.getInstance();
         return await upstoxBroker.cancelOrder(accountId, orderId);
+      case "DHAN":
+        const dhanBroker = DhanBroker.getInstance();
+        return await dhanBroker.cancelOrder(accountId, orderId);
       // Add cases for other brokers
       default:
         throw new Error("Broker not supported");
@@ -190,6 +215,7 @@ export class OrderManager {
   // Cancel all orders for a master and child accounts
   public async cancelAllOrders(accountId: string): Promise<void> {
     const accountOrders = this.customOrderBook[accountId]?.orders;
+    console.log(accountOrders);
     if (accountOrders) {
       for (const orderId of Object.keys(accountOrders)) {
         // inclued a check where we see if the order is not already cancelled
@@ -228,7 +254,7 @@ export class OrderManager {
     //convert position into orderDetail
     const orderDetails: OrderDetails = {
       baseInstrument: position.baseInstrument,
-      instrumentType: position.instrumentType==="PE" || position.instrumentType==="CE" ? "OPT" : "EQ",
+      instrumentType: position.instrumentType==="PE" || position.instrumentType==="CE" || position.instrumentType==="OPTIDX"? "OPT" : "EQ",
       expiry: position.expiry,
       strike: position.strike,
       optionType: position.optionType,
@@ -252,7 +278,7 @@ export class OrderManager {
       if(position.netQty==0 || position.netQty == "0") continue;
       const orderDetails: OrderDetails = {
         baseInstrument: position.baseInstrument,
-        instrumentType: (position.instrumentType==="CE"||position.instrumentType==="PE")?"OPT":position.instrumentType,
+        instrumentType: (position.instrumentType==="CE"||position.instrumentType==="PE" || position.instrumentType==="OPTIDX")?"OPT":position.instrumentType,
         expiry: position.expiry,
         strike: position.strike,
         optionType: position.optionType,
@@ -279,19 +305,52 @@ export class OrderManager {
         const upstoxBroker = UpstoxBroker.getInstance();
         return await upstoxBroker.getTrades(account.accessToken);
       // Add cases for other brokers
+      case "DHAN":
+        const dhanBroker = DhanBroker.getInstance();
+        return await dhanBroker.getTrades(account.accessToken);
       default:
         throw new Error("Broker not supported");
     }
   }
 
   // Fetch positions (without maintaining child data)
+  // public async getPositions(accountId: string): Promise<any> {
+  //   // const positions = this.customPosition[accountId].trackedPositions
+  //   const positions:any = await UpstoxBroker.getInstance().getPositions(accountId);
+  //   // console.log(positions);
+  //   if (positions) {
+  //     return positions
+  //   }
+  //   return {}
+  // }
   public async getPositions(accountId: string): Promise<any> {
-    // const positions = this.customPosition[accountId].trackedPositions
-    const positions:any = await UpstoxBroker.getInstance().getPositions(accountId);
-    // console.log(positions);
-    if (positions) {
-      return positions
+    const accountManager = AccountManager.getInstance();
+    const account = accountManager.getAuthenticatedAccountsAsObject(accountId);
+    // let position:any={}
+    console.log("broker:",account.broker);
+
+    if(account.broker === "UPSTOCKS"){
+      const upstoxBroker = UpstoxBroker.getInstance();
+      const position = await upstoxBroker.getPositions(account.accessToken);
+      return position;
+        
+    }else if(account.broker === "DHAN"){
+      const dhanBroker = DhanBroker.getInstance();
+      const position = await dhanBroker.getPositions(account.accessToken);
+      return position
+    }else{
+      throw new Error('Broker not supported');
     }
-    return {}
+
+    // switch (account.broker) {
+    //   case "UPSTOCKS":
+       
+    //   // Add cases for other brokers
+    //   case "DHAN":
+    //     const dhanBroker = DhanBroker.getInstance();
+    //     return await dhanBroker.getPositions(account.accessToken);
+    //   default:
+    //     throw new Error("Broker not supported");
+    // }
   }
 }
