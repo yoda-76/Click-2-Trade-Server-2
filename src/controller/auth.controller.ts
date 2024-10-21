@@ -19,7 +19,7 @@ export const login = async (req: Request, res: Response) => {
     const {name, verified, token} = authenticatedUser;
     res.cookie("atc", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "dev", // Only use secure cookies in production
+      secure: true, // Only use secure cookies in production
       // sameSite: 'Strict', // Helps prevent CSRF
       maxAge: 24 * 3600 * 1000, // Expiry time in milliseconds
     });
