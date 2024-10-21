@@ -20,7 +20,7 @@ export const login = async (req: Request, res: Response) => {
     res.cookie("atc", token, {
       httpOnly: true,
       secure: true, // Only use secure cookies in production
-      // sameSite: 'Strict', // Helps prevent CSRF
+      sameSite: 'none', // Helps prevent CSRF
       maxAge: 24 * 3600 * 1000, // Expiry time in milliseconds
     });
     res.json({ Message: "Logged in successfully", data:{name, email, verified, token}});
