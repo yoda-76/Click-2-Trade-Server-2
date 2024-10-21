@@ -78,7 +78,34 @@ export class DhanBroker {
 
     private async loadInstrumentData() {
       // Load instruments from CSV file
+      const rawInstrumentsDataDownloadLink = "https://images.dhan.co/api-data/api-scrip-master.csv";
       const filePath = path.join(__dirname, './instruments.csv');
+      
+      // Function to download the CSV file
+      const downloadCSV = async () => {
+          try {
+              const response = await axios.get(rawInstrumentsDataDownloadLink, {
+                  responseType: 'stream', // Set response type to stream for downloading
+              });
+      
+              const writer = fs.createWriteStream(filePath);
+      
+              // Pipe the response data to the file
+              response.data.pipe(writer);
+      
+              // Return a promise that resolves when the file is finished writing
+              return new Promise((resolve, reject) => {
+                  writer.on('finish', resolve);
+                  writer.on('error', reject);
+              });
+          } catch (error) {
+              console.error('Error downloading the CSV file:', error);
+          }
+      };
+      
+      // Call the function to download the CSV
+      await downloadCSV()
+      console.log('CSV file downloaded and saved as instruments.csv');
       const fileStream = fs.createReadStream(filePath);
       const jsonArray = await csvtojson().fromFile(filePath);
       // console.log(jsonArray);
