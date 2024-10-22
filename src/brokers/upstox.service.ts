@@ -328,7 +328,9 @@ export class UpstoxBroker {
             buyPrice: position.buy_price,                    // Buy Price
             sellPrice: position.sell_price,                  // Sell Price
             buyQty: position.day_buy_quantity,               // Buy Qty
-            sellQty: position.day_sell_quantity,             // Sell Qty
+            sellQty: position.day_sell_quantity,  
+            buyValue: position.buy_value,
+            sellValue: position.sell_value,                  // Sell Qty
             realisedPnL: position.realised,                  // Realised P&L
             unrealisedPnL: position.unrealised,              // Unrealised P&L
             product: position.product                        // Product

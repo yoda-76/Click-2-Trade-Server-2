@@ -386,7 +386,9 @@ export class DhanBroker {
             stopLoss: null, 
             multiplier: position.multiplier,                                 // Stop Loss (manual entry)
             buyPrice: position.buyAvg,                    // Buy Price
-            sellPrice: position.sellAvg,                  // Sell Price
+            sellPrice: position.sellAvg,  
+            buyValue: position.dayBuyValue,                // Sell Price
+            sellValue: position.daySellValue,
             buyQty: position.buyQty,               // Buy Qty
             sellQty: position.sellQty,             // Sell Qty
             realisedPnL: position.realizedProfit,                  // Realised P&L
