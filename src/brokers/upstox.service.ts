@@ -323,7 +323,8 @@ export class UpstoxBroker {
             setSl: null,                                     // Set SL (manual entry)
             target: null,                                    // Target (manual entry)
             targetPrice: null,                               // Target Price (manual entry)
-            stopLoss: null,                                  // Stop Loss (manual entry)
+            stopLoss: null,    
+            multiplier: position.multiplier,                              // Stop Loss (manual entry)
             buyPrice: position.buy_price,                    // Buy Price
             sellPrice: position.sell_price,                  // Sell Price
             buyQty: position.day_buy_quantity,               // Buy Qty

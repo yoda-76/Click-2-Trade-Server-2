@@ -383,7 +383,8 @@ export class DhanBroker {
             setSl: null,                                     // Set SL (manual entry)
             target: null,                                    // Target (manual entry)
             targetPrice: null,                               // Target Price (manual entry)
-            stopLoss: null,                                  // Stop Loss (manual entry)
+            stopLoss: null, 
+            multiplier: position.multiplier,                                 // Stop Loss (manual entry)
             buyPrice: position.buyAvg,                    // Buy Price
             sellPrice: position.sellAvg,                  // Sell Price
             buyQty: position.buyQty,               // Buy Qty
