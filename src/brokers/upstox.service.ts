@@ -67,7 +67,7 @@ export class UpstoxBroker {
           code: authcode,
           client_id: userData.key,
           client_secret: userData.secret,
-          redirect_uri: process.env.UPSTOX_REDIRECT_URL,
+          redirect_uri: "https://api.cliq2trade.com/api/upstox/auth",
           grant_type: "authorization_code",
         }),
         {
