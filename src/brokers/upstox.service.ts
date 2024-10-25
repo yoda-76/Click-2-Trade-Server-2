@@ -157,7 +157,7 @@ export class UpstoxBroker {
             },
             data: {
               quantity: slicedQty[i],
-              product: productType,
+              product: productType==="I" || productType==="D" ? productType : productType==="INTRADAY"? "I" : "D",
               validity: "DAY",
               price: orderType === "LIMIT" ? price : 0,
               tag: "string",
