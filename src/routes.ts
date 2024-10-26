@@ -10,6 +10,7 @@ import { DhanBroker } from "./brokers/dhan/dhan.service";
 import { cancelAllOrders, cancelOrder, getOrders, placeOrder, squareoffAllPositions, squareoffSinglePositions } from "./controller/order.controller";
 import { getPositions } from "./controller/positions.controller";
 import { getPrefrences, getUserDetails, updatePrefrences } from "./controller/user.controller";
+import { optionChainController } from "./controller/option-chain.controller";
 
 
 
@@ -127,6 +128,8 @@ function routes(app: Express) {
           const instrumentDataSearchMap = upstoxBroker.getInstrumentDataSearchMapAsObject();
           res.json(instrumentDataSearchMap);
         })
+
+        app.post("/api/get-option-chain", optionChainController)
         
     //     app.post("/api/get-at-by-id", (req: Request, res: Response) => {
     //       const { u_id } = req.body;
