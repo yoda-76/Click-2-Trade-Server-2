@@ -8,7 +8,7 @@ const expiries = {
 };
 const indecies = ['NSE_INDEX|Nifty Bank', 'NSE_INDEX|Nifty 50'];
 const deltaRange = {low: 0.1, high: 0.6};
-const fetchInterval = 1000;
+const fetchInterval = 60000;
 const baseTime = '09:20';
 const redirectUrl = process.env.OPTION_CHAIN_REDIRECT_URL;
 
