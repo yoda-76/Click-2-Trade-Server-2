@@ -40,8 +40,8 @@ export async function zerodhaAuth(req: Request, res: Response) {
         const { request_token } = req.query;
 
         // Define your API key and secret
-        const api_secret = "mjws2zn9x2bf30xvq7cuz7pqd0qxvswv";
-        const api_key = "wmdvpcvumovceox1";
+        const api_secret = process.env.KITE_API_SECRET;
+        const api_key = process.env.KITE_API_KEY;
 
         // Generate checksum using SHA-256 hash of (api_key + request_token + api_secret)
         const kc = new KiteConnect({ api_key });
@@ -54,7 +54,7 @@ export async function zerodhaAuth(req: Request, res: Response) {
         const upstoxBroker = UpstoxBroker.getInstance();
 
         const instrumentTokenList = upstoxBroker.getTokensToBeSubscribed(); 
-        await axios.post("http://13.60.38.12:3001/api/kite/auth", {access_token, instrumentTokenList});
+        await axios.post(process.env.KITE_AUTH_SERVER_URL, {access_token, instrumentTokenList});
         // Send a success response
         res.status(200).json({ success: true, access_token });
     } catch (error) {

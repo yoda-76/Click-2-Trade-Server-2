@@ -10,7 +10,7 @@ import { DhanBroker } from "./brokers/dhan/dhan.service";
 import { cancelAllOrders, cancelOrder, getOrders, placeOrder, squareoffAllPositions, squareoffSinglePositions } from "./controller/order.controller";
 import { getPositions } from "./controller/positions.controller";
 import { getPrefrences, getUserDetails, updatePrefrences } from "./controller/user.controller";
-import { optionChainController } from "./controller/option-chain.controller";
+import { getOptionChainDashboard, optionChainAuthController, optionChainController } from "./controller/option-chain.controller";
 
 
 
@@ -33,9 +33,7 @@ function routes(app: Express) {
   app.get("/api/upstox/auth", upstoxAuth)
   app.post("/api/dhan/auth", dhanAuth)
   app.get("/api/kite/auth", zerodhaAuth)
-
-  
-  
+  app.get("/api/optionchain/auth", optionChainAuthController)
   
   app.post("/api/fill-stores", authenticate, ) //TODO
   
@@ -55,19 +53,6 @@ function routes(app: Express) {
   
   app.post("api/get-user-prefrences", authenticate, getPrefrences)
   app.post("api/update-user-prefrences", authenticate, updatePrefrences)
-  //body: {
-  // stoploss             Int
-  // target               Int
-  // sl_increment         Int
-  // target_increment     Int
-  // trailing_point       Int
-  // mtm_stoploss         Int
-  // mtm_target           Int
-  // mtm_sl_increment     Int
-  // mtm_target_increment Int
-  // mtm_trailing_point   Int
-  //}
-
 
   // user details
   app.post("/api/get-user-details", authenticate, getUserDetails) //not protected but doesnot need u_id
@@ -130,76 +115,9 @@ function routes(app: Express) {
         })
 
         app.post("/api/get-option-chain", optionChainController)
+        app.post("/api/get-option-chain-dashboard", getOptionChainDashboard)
         
-    //     app.post("/api/get-at-by-id", (req: Request, res: Response) => {
-    //       const { u_id } = req.body;
-    //       const accountManager = AccountManager.getInstance();
-    //       const accounts = accountManager.getAccessToken(u_id);
-    // res.json(accounts);
-    // })
-  // app.post("/api/ex",(req,res)=>{
-  // function extractOptionDetails(tradingSymbol) {
-  // // Regular expression to capture the base instrument, year, month/day, strike, and option type (CE/PE)
-  // const regex = /([A-Z]+)(\d{2})([A-Z]{1}\d{1,2}[A-Z]{0,2}|\w{3})(\d+)(CE|PE)/;
-  
-  // const match = tradingSymbol.match(regex);
-  
-  // if (!match) {
-  //   throw new Error('Invalid trading symbol format');
-  // }
-  
-  // const baseInstrument = match[1];
-  // const year = `20${match[2]}`;  // Extract last two digits of the year, assuming 20xx.
-  // const monthOrDay = match[3];    // Could be month (OCT) or day format (O01).
-  // const strike = match[4];
-  // const optionType = match[5];
-  // console.log(baseInstrument, year, monthOrDay, strike, optionType);
-  
-  // let expiry; 
-  // const lastExpMonths = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-  
-  // // Handling expiry for month names (e.g., OCT, NOV, DEC)
-  // if(lastExpMonths.includes(monthOrDay)){
-  // const monthMapping = {
-  //     'JAN': '01',
-  //     'FEB': '02',
-  //     'MAR': '03',
-  //     'APR': '04',
-  //     'MAY': '05',
-  //     'JUN': '06',
-  //     'JUL': '07',
-  //     'AUG': '08',
-  //     'SEP': '09',
-  //     'OCT': '10',
-  //     'NOV': '11',
-  //     'DEC': '12'
-  // };
-  // // const date = "30";  //how to get last expiry
-  // // expiry = `${year}-${monthMapping[monthOrDay]}-${date}` 
-  // expiry = null
-  // }else if(monthOrDay[0]==='O' || monthOrDay[0]==='N' || monthOrDay[0]==='D'){
-  // const monthMapping = {
-  //   'O': '10',
-  //   'N': '11',
-  //   'D': '12'
-  // };
-  // expiry = `${year}-${monthMapping[monthOrDay[0]]}-${monthOrDay[1]}${monthOrDay[2]}`;
-  // }else{
-  // expiry = `${year}-0${monthOrDay[0]}-${monthOrDay[1]}${monthOrDay[2]}`
-  // }
-  
-  // return {
-  //   baseInstrument,
-  //   expiry,
-  //   strike,
-  //   optionType
-  // };
-  // }
-  
-  // // Example usage
-  // const data=extractOptionDetails(req.body.symbol)  
-  // res.json(data)
-  // })
+    
   app.post("/api/test-add-acc", async (req: Request, res: Response) => {
     const accountManager = AccountManager.getInstance();
     

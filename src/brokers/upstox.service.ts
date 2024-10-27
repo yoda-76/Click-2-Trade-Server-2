@@ -67,7 +67,7 @@ export class UpstoxBroker {
           code: authcode,
           client_id: userData.key,
           client_secret: userData.secret,
-          redirect_uri: "https://api.cliq2trade.com/api/upstox/auth",
+          redirect_uri: process.env.UPSTOX_REDIRECT_URL,
           grant_type: "authorization_code",
         }),
         {
@@ -220,53 +220,7 @@ export class UpstoxBroker {
       };
 
       const response = await axios(config)
-      // before returning convert to base 
-      // const t2 = {
-      //   symbolName:"",
-      //   type:"",
-      //   side:"",
-      //   qty:"",
-      //   remQty:"",
-      //   orderPrice:"",
-      //   tradedPrice:"",
-      //   triggerPrice:"",
-      //   status:"",
-      //   timeStamp: "",
-      //   orderId:"",
-      //   message:""
-      // }
-      // const t={
-      //   "exchange": "NSE",
-      //   "product": "D",
-      //   "price": 0,
-      //   "quantity": 15,
-      //   "status": "after market order req received",
-      //   "guid": null,
-      //   "tag": "string",
-      //   "instrument_token": "NSE_EQ|INE263A01024",
-      //   "placed_by": "KL2770",
-      //   "tradingsymbol": "BEL-EQ",
-      //   "trading_symbol": "BEL-EQ",
-      //   "order_type": "MARKET",
-      //   "validity": "DAY",
-      //   "trigger_price": 0,
-      //   "disclosed_quantity": 0,
-      //   "transaction_type": "BUY",
-      //   "average_price": 0,
-      //   "filled_quantity": 0,
-      //   "pending_quantity": 15,
-      //   "status_message": null,
-      //   "status_message_raw": null,
-      //   "exchange_order_id": "",
-      //   "parent_order_id": null,
-      //   "order_id": "240929000003371",
-      //   "variety": "SIMPLE",
-      //   "order_timestamp": "2024-09-29 19:33:47",
-      //   "exchange_timestamp": null,
-      //   "is_amo": true,
-      //   "order_request_id": "1",
-      //   "order_ref_id": "UDAPI-I-Z5wPHeGizhJlIkt7DJpUDTFf"
-      // }
+      
       const convertedOrderbook = {
         symbolName: response.data.data.trading_symbol,
         type: response.data.data.order_type,
