@@ -28,3 +28,8 @@ export const getOptionChainDashboard = async (req: any, res: any) => {
     const optionChainDashBoard = await optionChainInstance.getDashboard();
     res.json(optionChainDashBoard);
 }
+export const stopOptionChainProcessing = async (req: any, res: any) => {
+    const optionChainInstance = OptionChainHandler.getInstance();
+    const optionChainDashBoard = await optionChainInstance.stopFetchingOptionChain();
+    res.json(optionChainDashBoard);
+}   

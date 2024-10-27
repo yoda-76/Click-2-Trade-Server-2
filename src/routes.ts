@@ -10,7 +10,7 @@ import { DhanBroker } from "./brokers/dhan/dhan.service";
 import { cancelAllOrders, cancelOrder, getOrders, placeOrder, squareoffAllPositions, squareoffSinglePositions } from "./controller/order.controller";
 import { getPositions } from "./controller/positions.controller";
 import { getPrefrences, getUserDetails, updatePrefrences } from "./controller/user.controller";
-import { getOptionChainDashboard, optionChainAuthController, optionChainController } from "./controller/option-chain.controller";
+import { getOptionChainDashboard, optionChainAuthController, optionChainController, stopOptionChainProcessing } from "./controller/option-chain.controller";
 
 
 
@@ -116,6 +116,7 @@ function routes(app: Express) {
 
         app.post("/api/get-option-chain", optionChainController)
         app.post("/api/get-option-chain-dashboard", getOptionChainDashboard)
+        app.post("/api/stop-option-chain-interval", stopOptionChainProcessing)
         
     
   app.post("/api/test-add-acc", async (req: Request, res: Response) => {
