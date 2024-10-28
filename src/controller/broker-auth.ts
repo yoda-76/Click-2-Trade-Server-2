@@ -54,7 +54,7 @@ export async function zerodhaAuth(req: Request, res: Response) {
         const upstoxBroker = UpstoxBroker.getInstance();
 
         const instrumentTokenList = upstoxBroker.getTokensToBeSubscribed(); 
-        await axios.post(process.env.KITE_AUTH_SERVER_URL, {access_token, instrumentTokenList});
+        await axios.post(process.env.KITE_AUTH_SERVER_URL, {key:api_key, access_token, instrumentTokenList});
         // Send a success response
         res.status(200).json({ success: true, access_token });
     } catch (error) {
