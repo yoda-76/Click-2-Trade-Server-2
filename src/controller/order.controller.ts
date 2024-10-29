@@ -54,6 +54,7 @@ export const squareoffSinglePositions = async (req: Request, res: Response) => {
   try {
     const orderManager = await OrderManager.getInstance();
     await orderManager.exitSinglePosition(account_id, position);
+    res.json({ message: "Position exited successfully" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -64,6 +65,7 @@ export const squareoffAllPositions = async (req: Request, res: Response) => {
   try {
     const orderManager = await OrderManager.getInstance();
     await orderManager.exitAllPositions(account_id);
+    res.json({ message: "All positions exited successfully" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
