@@ -3,8 +3,8 @@ import axios from 'axios';
 const apiKey = process.env.KEY_OPTION_CHAIN;
 const apiSecret = process.env.SECRET_OPTION_CHAIN;
 const expiries = {
-    'NSE_INDEX|Nifty Bank': '2024-10-30',
-    'NSE_INDEX|Nifty 50': '2024-10-31',
+    'NSE_INDEX|Nifty Bank': '2024-11-06',
+    'NSE_INDEX|Nifty 50': '2024-11-07',
 };
 const indecies = ['NSE_INDEX|Nifty Bank', 'NSE_INDEX|Nifty 50'];
 const deltaRange = {low: 0.05, high: 0.6};
