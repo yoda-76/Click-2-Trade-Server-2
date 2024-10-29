@@ -7,7 +7,7 @@ const expiries = {
     'NSE_INDEX|Nifty 50': '2024-10-31',
 };
 const indecies = ['NSE_INDEX|Nifty Bank', 'NSE_INDEX|Nifty 50'];
-const deltaRange = {low: 0.1, high: 0.6};
+const deltaRange = {low: 0.05, high: 0.6};
 const fetchInterval = 60000;
 const baseTime = '09:20';
 const redirectUrl = process.env.OPTION_CHAIN_REDIRECT_URL;
@@ -157,7 +157,7 @@ class OptionChainHandler {
         const staticFilteredOptions = this.staticOptions[index]?.filter(option => {
             const callDelta = option.call_options.option_greeks.delta;
             const putDelta = option.put_options.option_greeks.delta;
-            return (0.1 <= callDelta && callDelta <= 0.6) || (0.1 <= putDelta && putDelta <= 0.6);
+            return (callDelta >= deltaRange.low && callDelta <= deltaRange.high) || (putDelta >= deltaRange.low && putDelta <= deltaRange.high);
         }) || [];
 
         // Calculate staticPutVega and staticCallVega
