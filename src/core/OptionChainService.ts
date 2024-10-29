@@ -81,11 +81,12 @@ class OptionChainHandler {
         
         const response = await axios(config);
         const currentTime = new Date().toLocaleTimeString('en-IN', {
+            timeZone: 'Asia/Kolkata',  // Explicitly setting to India's timezone
             hour: '2-digit',
             minute: '2-digit',
             second: '2-digit',
-            hour12: false, // Set to true for 12-hour format
-        });
+            hour12: false, // Use true for 12-hour format
+          });
         return response.data.data.map((item: any) => ({
             ...item,
             time: currentTime, // Store only the time part
@@ -100,11 +101,12 @@ class OptionChainHandler {
             const chainData = await this.fetchOptionChain(index, expiry[index]);
             const currentDate = new Date().toISOString().split("T")[0]; // Date part only
             const currentTime = new Date().toLocaleTimeString('en-IN', {
+                timeZone: 'Asia/Kolkata',  // Explicitly setting to India's timezone
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit',
-                hour12: false, // Set to true for 12-hour format
-            });
+                hour12: false, // Use true for 12-hour format
+              });
             // Initialize index and date if not already present
             if (!this.optionChainStore[index]) {
                 this.optionChainStore[index] = {};
@@ -226,11 +228,12 @@ class OptionChainHandler {
             try {
                 await this.updateOptionChain();
                 const currentTime = new Date().toLocaleTimeString('en-IN', {
+                    timeZone: 'Asia/Kolkata',  // Explicitly setting to India's timezone
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit',
-                    hour12: false, // Set to true for 12-hour format
-                });
+                    hour12: false, // Use true for 12-hour format
+                  });
                 console.log("Option chain updated successfully at ", currentTime);
             } catch (error) {
                 console.error("Error updating option chain:", error);
