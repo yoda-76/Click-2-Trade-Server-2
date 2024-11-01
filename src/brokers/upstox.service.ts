@@ -61,6 +61,13 @@ export class UpstoxBroker {
         throw new Error( "Error authorizing with Upstox : .Controllers/Authorization: handleWebhook");
       }
       // Fetch access token using the authorization code
+      console.log({
+        code: authcode,
+        client_id: userData.key,
+        client_secret: userData.secret,
+        redirect_uri: process.env.UPSTOX_REDIRECT_URL,
+        grant_type: "authorization_code",
+      });
       const response = await axios.post(
         "https://api.upstox.com/v2/login/authorization/token",
         new URLSearchParams({
