@@ -61,6 +61,7 @@ export class OrderManager {
     this.addOrderToOrderBook(accountId, orderId, orderDetailsFromBroker);
 
     // Copy order to child accounts
+    const orignalQty = orderDetails.qty;
     const id = accountManager.getAuthenticatedAccountId(accountId);
     const childAccounts = await dbClient.getChildAccountsByMasterId(id);
     for (const childAccount of childAccounts) {
@@ -69,7 +70,7 @@ export class OrderManager {
       const childAccountDetails = accountManager.getAuthenticatedAccountId(childAccountId);
       console.log(childAccountDetails);
       if(!childAccountDetails) continue;
-      orderDetails.qty = orderDetails.qty * childAccount.multiplier;
+      orderDetails.qty = orignalQty * childAccount.multiplier;
       console.log("----ORDERS IN CHILD ACCOUNT WILL BE----");
       console.log("orderDetails", orderDetails);
       // console.log(childAccountDetails);
