@@ -11,7 +11,7 @@ import { cancelAllOrders, cancelOrder, getOrders, placeOrder, squareoffAllPositi
 import { getPositions } from "./controller/positions.controller";
 import { getPrefrences, getUserDetails, updatePrefrences } from "./controller/user.controller";
 import { getOptionChainDashboard, optionChainAuthController, optionChainController, stopOptionChainProcessing } from "./controller/option-chain.controller";
-import { AngelOne } from "brokers/angel/angel.service";
+import { AngelOne } from "./brokers/angel/angel.service";
 
 
 
@@ -90,7 +90,7 @@ function routes(app: Express) {
           const instrumentData = upstoxBroker.getInstrumentDataAsObject();
           res.json(instrumentData);
         })
-        
+
         app.post("/api/get-angel-instrumentData", (req: Request, res: Response) => {
           const Broker = AngelOne.getInstance();
           const instrumentData = Broker.getInstrumentDataAsObject();
