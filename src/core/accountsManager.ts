@@ -1,6 +1,7 @@
 import { dbClient } from "../utils/dbClient";
 import { UpstoxBroker } from "../brokers/upstox.service";
 import { DhanBroker } from "../brokers/dhan/dhan.service";
+import { AngelOne } from "../brokers/angel/angel.service";
 
 export class AccountManager {
     private static instance: AccountManager;
@@ -128,6 +129,11 @@ export class AccountManager {
         const dhanBroker = DhanBroker.getInstance();
         console.log(account);
         const funds = await dhanBroker.getFunds(account.accessToken);
+        return funds;
+      }else if(account.broker === "ANGEL"){
+        console.log("Angel account : ",account);
+        const angelBroker = AngelOne.getInstance();
+        const funds = await angelBroker.getFunds(account.accessToken, account.key);
         return funds;
       }else{
         throw new Error('Broker not supported');

@@ -3,6 +3,7 @@ import axios from 'axios';
 import crypto from 'crypto';
 import { UpstoxBroker } from "../brokers/upstox.service";
 import { DhanBroker } from "../brokers/dhan/dhan.service";
+import { AngelOne } from "../brokers/angel/angel.service";
 var {  KiteConnect } = require("kiteconnect");
 
 
@@ -60,5 +61,20 @@ export async function zerodhaAuth(req: Request, res: Response) {
     } catch (error) {
         console.error('Error exchanging request token:', error);
         res.status(500).json({ success: false, message: 'Authentication failed', error: error.message });
+    }
+}
+
+export async function angelAuth(req: Request, res: Response) {
+    try {
+        const {id, clientCode, password, totp}:{
+            id: string,
+            clientCode: string,
+            password: string,
+            totp: string}= req.body;
+        const angelBroker = AngelOne.getInstance();
+        const msg = await angelBroker.handleWebhook(id, clientCode, password, totp);
+        res.json({message:msg});
+    } catch (error) {
+        res.status(400).json({ error: error.message });
     }
 }

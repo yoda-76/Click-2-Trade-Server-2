@@ -3,6 +3,7 @@ import { UpstoxBroker } from "../brokers/upstox.service";
 import { dbClient } from "../utils/dbClient";
 import { OrderDetails } from "../Interface";
 import { DhanBroker } from "../brokers/dhan/dhan.service";
+import { AngelOne } from "../brokers/angel/angel.service";
 // Add other broker imports as needed
 
 
@@ -108,6 +109,11 @@ export class OrderManager {
         orderDetails = await dhanBroker.getOrderDetailsByOrderId(accountId, orderId);
         console.log("order in dhan", orderDetails);
         return orderDetails;
+      case "ANGEL":
+        const angelBroker = AngelOne.getInstance();
+        orderDetails = await angelBroker.getOrderDetailsByOrderId(accountId, orderId);
+        console.log("order in angel", orderDetails);
+        return orderDetails;
         
       default:
         throw new Error("Broker not supported");
@@ -128,6 +134,11 @@ export class OrderManager {
           const dhanBroker = DhanBroker.getInstance();
           order_id= await dhanBroker.placeOrder(accountId, orderDetails);
           console.log("order in dhan");
+          return order_id;
+        case "ANGEL":
+          const angelBroker = AngelOne.getInstance();
+          order_id = await angelBroker.placeOrder(accountId, orderDetails);
+          console.log("order in angel");
           return order_id;
         // Add cases for other brokers
         default:

@@ -2,7 +2,7 @@ import { Express, Request, Response } from "express";
 import {  login, logout, register,  } from "./controller/auth.controller";
 import { authenticate } from "./middleware/authenticate";
 import { addAccount, deleteChildAccount, deleteMasterAccount, getAccounts, getChildAccountByMasterUid, getFunds, toggleChildAccount, updateChildMultiplier } from "./controller/accounts.controller";
-import { dhanAuth, upstoxAuth, zerodhaAuth } from "./controller/broker-auth";
+import { angelAuth, dhanAuth, upstoxAuth, zerodhaAuth } from "./controller/broker-auth";
 import { AccountManager } from "./core/accountsManager";
 import { UpstoxBroker } from "./brokers/upstox.service";
 import { DhanBroker } from "./brokers/dhan/dhan.service";
@@ -11,6 +11,7 @@ import { cancelAllOrders, cancelOrder, getOrders, placeOrder, squareoffAllPositi
 import { getPositions } from "./controller/positions.controller";
 import { getPrefrences, getUserDetails, updatePrefrences } from "./controller/user.controller";
 import { getOptionChainDashboard, optionChainAuthController, optionChainController, stopOptionChainProcessing } from "./controller/option-chain.controller";
+import { AngelOne } from "brokers/angel/angel.service";
 
 
 
@@ -32,6 +33,7 @@ function routes(app: Express) {
   //broker auth
   app.get("/api/upstox/auth", upstoxAuth)
   app.post("/api/dhan/auth", dhanAuth)
+  app.post("/api/angel/auth", angelAuth)
   app.get("/api/kite/auth", zerodhaAuth)
   app.get("/api/optionchain/auth", optionChainAuthController)
   
@@ -86,6 +88,12 @@ function routes(app: Express) {
         app.post("/api/get-instrumentData", (req: Request, res: Response) => {
           const upstoxBroker = UpstoxBroker.getInstance();
           const instrumentData = upstoxBroker.getInstrumentDataAsObject();
+          res.json(instrumentData);
+        })
+        
+        app.post("/api/get-angel-instrumentData", (req: Request, res: Response) => {
+          const Broker = AngelOne.getInstance();
+          const instrumentData = Broker.getInstrumentDataAsObject();
           res.json(instrumentData);
         })
 
