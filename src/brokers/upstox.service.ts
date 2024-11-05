@@ -135,14 +135,12 @@ export class UpstoxBroker {
         const { baseInstrument, instrumentType, expiry, strike, optionType, exchange, qty, price, triggerPrice, orderType, side, productType } = orderDetails;
         console.log(orderDetails);
         let key="";
-        if(exchange === "BSE"){
-          throw new Error('BSE not supported');
-        }
+        
         if(instrumentType === "OPT"){
-          console.log(this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.0`][optionType]);
-          key=  this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.0`][optionType].instrument_key
+          console.log(this.instrumentData[exchange][baseInstrument][`${expiry} : ${strike}.0`][optionType]);
+          key=  this.instrumentData[exchange][baseInstrument][`${expiry} : ${strike}.0`][optionType].instrument_key
         }else if(instrumentType === "EQ"){
-          key=  this.instrumentData.NSE.EQUITY[baseInstrument].instrument_key
+          key=  this.instrumentData[exchange].EQUITY[baseInstrument].instrument_key
         }else if(instrumentType === "FUT"){
           throw new Error('Futures not supported');
         }else{ 
@@ -304,74 +302,74 @@ export class UpstoxBroker {
       }
   }
 
-  public async getPositionByOrderDetails(accountId: string, orderDetails: OrderDetails) {
-    try {
-      const accountManager = AccountManager.getInstance();
-      const access_token = accountManager.getAccessToken(accountId);
-      let config = {
-        method: 'get',
-      maxBodyLength: Infinity,
-        url: 'https://api.upstox.com/v2/portfolio/short-term-positions',
-        headers: { 
-          Accept: "application/json",
-          Authorization: `Bearer ${access_token}`,
-        }
-      };
+  // public async getPositionByOrderDetails(accountId: string, orderDetails: OrderDetails) {
+  //   try {
+  //     const accountManager = AccountManager.getInstance();
+  //     const access_token = accountManager.getAccessToken(accountId);
+  //     let config = {
+  //       method: 'get',
+  //     maxBodyLength: Infinity,
+  //       url: 'https://api.upstox.com/v2/portfolio/short-term-positions',
+  //       headers: { 
+  //         Accept: "application/json",
+  //         Authorization: `Bearer ${access_token}`,
+  //       }
+  //     };
       
-      const response = await axios(config)
-      console.log("positions from broker", response.data.data);
-      let position;
-      let instrumentDetails;
-      if(orderDetails.exchange === "BSE"){
-        throw new Error('BSE not supported');
-      }
-      if(orderDetails.instrumentType === "OPT"){
-        instrumentDetails=  this.instrumentData.NSE[orderDetails.baseInstrument][`${orderDetails.expiry} : ${orderDetails.strike}.0`][orderDetails.optionType]
-      }else if(orderDetails.instrumentType === "EQ"){
-        instrumentDetails=  this.instrumentData.NSE.EQUITY[orderDetails.baseInstrument]
-      }else if(orderDetails.instrumentType === "FUT"){
-        throw new Error('Futures not supported');
-      }else{ 
-        throw new Error('Instrument type not supported');
-      }
-      response.data.data.map((p: any) => {
-        if(p.trading_symbol === instrumentDetails.tradingsymbol) {
-          position = p
-        }
-      })
-      console.log({orderDetails,position, instrumentDetails});
-      const convertedPosition = {
-        netQty: position.quantity,                       // Net Qty
-        symbolName: position.trading_symbol,             // Symbol name
-        baseInstrument: instrumentDetails.base,                   // Base Instrument
-        instrumentType: instrumentDetails.instrument_type,       // Instrument Type
-        expiry: instrumentDetails.expiry,                            // Expiry
-        strike: instrumentDetails.strike,                             // Strike
-        optionType: orderDetails.optionType,                   // Option Type
-        ltpToken: instrumentDetails.ltpToken?instrumentDetails.ltpToken:null,                        // LTP Token
-        exchange: position.exchange==="NFO" || position.exchange==="NSE"?"NSE":null,                     // Exchange
-        action: null,                                    // Action (Buy/Sell based on qty)
-        pnl: position.pnl,                               // PnL
-        ltp: position.last_price,                        // LTP
-        avgPrice: position.average_price,                // Avg Price
-        sl: null,                                        // SL (manual entry)
-        setSl: null,                                     // Set SL (manual entry)
-        target: null,                                    // Target (manual entry)
-        setTarget: null,                                 // Set Target (manual entry)
-        buyPrice: position.buy_price,                    // Buy Price
-        sellPrice: position.sell_price,                  // Sell Price
-        buyQty: position.day_buy_quantity,               // Buy Qty
-        sellQty: position.day_sell_quantity,             // Sell Qty
-        realisedPnL: position.realised,                  // Realised P&L
-        unrealisedPnL: position.unrealised,              // Unrealised P&L
-        product: position.product                        // Product
-      };
-      console.log("converted position", convertedPosition);
-      return convertedPosition
-    }catch (error) {
-      throw error;
-    }
-  }
+  //     const response = await axios(config)
+  //     console.log("positions from broker", response.data.data);
+  //     let position;
+  //     let instrumentDetails;
+  //     if(orderDetails.exchange === "BSE"){
+  //       throw new Error('BSE not supported');
+  //     }
+  //     if(orderDetails.instrumentType === "OPT"){
+  //       instrumentDetails=  this.instrumentData.NSE[orderDetails.baseInstrument][`${orderDetails.expiry} : ${orderDetails.strike}.0`][orderDetails.optionType]
+  //     }else if(orderDetails.instrumentType === "EQ"){
+  //       instrumentDetails=  this.instrumentData.NSE.EQUITY[orderDetails.baseInstrument]
+  //     }else if(orderDetails.instrumentType === "FUT"){
+  //       throw new Error('Futures not supported');
+  //     }else{ 
+  //       throw new Error('Instrument type not supported');
+  //     }
+  //     response.data.data.map((p: any) => {
+  //       if(p.trading_symbol === instrumentDetails.tradingsymbol) {
+  //         position = p
+  //       }
+  //     })
+  //     console.log({orderDetails,position, instrumentDetails});
+  //     const convertedPosition = {
+  //       netQty: position.quantity,                       // Net Qty
+  //       symbolName: position.trading_symbol,             // Symbol name
+  //       baseInstrument: instrumentDetails.base,                   // Base Instrument
+  //       instrumentType: instrumentDetails.instrument_type,       // Instrument Type
+  //       expiry: instrumentDetails.expiry,                            // Expiry
+  //       strike: instrumentDetails.strike,                             // Strike
+  //       optionType: orderDetails.optionType,                   // Option Type
+  //       ltpToken: instrumentDetails.ltpToken?instrumentDetails.ltpToken:null,                        // LTP Token
+  //       exchange: position.exchange==="NFO" || position.exchange==="NSE"?"NSE":null,                     // Exchange
+  //       action: null,                                    // Action (Buy/Sell based on qty)
+  //       pnl: position.pnl,                               // PnL
+  //       ltp: position.last_price,                        // LTP
+  //       avgPrice: position.average_price,                // Avg Price
+  //       sl: null,                                        // SL (manual entry)
+  //       setSl: null,                                     // Set SL (manual entry)
+  //       target: null,                                    // Target (manual entry)
+  //       setTarget: null,                                 // Set Target (manual entry)
+  //       buyPrice: position.buy_price,                    // Buy Price
+  //       sellPrice: position.sell_price,                  // Sell Price
+  //       buyQty: position.day_buy_quantity,               // Buy Qty
+  //       sellQty: position.day_sell_quantity,             // Sell Qty
+  //       realisedPnL: position.realised,                  // Realised P&L
+  //       unrealisedPnL: position.unrealised,              // Unrealised P&L
+  //       product: position.product                        // Product
+  //     };
+  //     console.log("converted position", convertedPosition);
+  //     return convertedPosition
+  //   }catch (error) {
+  //     throw error;
+  //   }
+  // }
   // Load instrument data into memory
   private async loadInstrumentData() {
     try {
@@ -433,7 +431,22 @@ export class UpstoxBroker {
         "EQUITY": {},
         "BANKNIFTY": {},
         "FINNIFTY": {},
-        "NIFTY": {},
+        "NIFTY": {}
+      },
+      "BSE": {
+        "INDEX": {
+          "BANKEX": {},
+          "SENSEX": {}
+        },
+        "EQUITY": {},
+        "BANKEX": {},
+        "SENSEX": {}
+      },
+      "MCX": {
+        "INDEX": {
+          "CRUDEOIL": {}
+        },
+        "CRUDEOIL":{}
       }
     };
 
@@ -447,6 +460,11 @@ export class UpstoxBroker {
         if (name === "Nifty 50") structuredData.NSE.INDEX.NIFTY = instrument;
         if (name === "Nifty Bank") structuredData.NSE.INDEX.BANKNIFTY = instrument;
         if (name === "Nifty Fin Service") structuredData.NSE.INDEX.FINNIFTY = instrument;
+
+        if (name === "SENSEX") structuredData.BSE.INDEX.SENSEX = instrument;
+        if (name === "BANKEX") structuredData.BSE.INDEX.BANKEX = instrument;
+
+
       }
 
       // Options handling
@@ -473,6 +491,44 @@ export class UpstoxBroker {
         }
       }else if(instrument_type === "EQUITY" && exchange === "NSE_EQ" && equitySymbols.includes(tradingsymbol)){
         structuredData.NSE.EQUITY[tradingsymbol] = instrument;
+      }else if(instrument_type === "EQUITY" && exchange === "BSE_EQ" && equitySymbols.includes(tradingsymbol)){
+        structuredData.BSE.EQUITY[tradingsymbol] = instrument;
+      }else if(instrument_type === "FUTCOM" && exchange === "MCX_FO" && name === "CRUDE OIL" && (option_type === "PE" || option_type === "CE")){
+        if (option_type === "CE") {
+          const baseSymbol = tradingsymbol.slice(0, -2);
+
+          // Match CE with PE
+          jsonArray.forEach(otherInstrument => {
+            if (otherInstrument.option_type === "PE") {
+              const otherBaseSymbol = otherInstrument.tradingsymbol.slice(0, -2);
+
+              if (baseSymbol === otherBaseSymbol) {
+                if (tradingsymbol.includes("CRUDEOIL")) {
+                  structuredData.MCX.CRUDEOIL[`${expiry} : ${strike}.0`] = { CE: instrument, PE: otherInstrument };
+                }
+              }
+            }
+          });
+        }
+      }else if(instrument_type === "OPTIDX" && exchange === "BSE_FO"){
+        if (option_type === "CE") {
+          const baseSymbol = tradingsymbol.slice(0, -2);
+
+          // Match CE with PE
+          jsonArray.forEach(otherInstrument => {
+            if (otherInstrument.option_type === "PE") {
+              const otherBaseSymbol = otherInstrument.tradingsymbol.slice(0, -2);
+
+              if (baseSymbol === otherBaseSymbol) {
+                if (tradingsymbol.includes("SENSEX")) {
+                  structuredData.BSE.SENSEX[`${expiry} : ${strike}.0`] = { CE: instrument, PE: otherInstrument };
+                } else if (tradingsymbol.includes("BANKEX")) {
+                  structuredData.BSE.BANKEX[`${expiry} : ${strike}.0`] = { CE: instrument, PE: otherInstrument };
+                }
+              }
+            }
+          });
+        }
       }
     });
 
@@ -486,24 +542,56 @@ export class UpstoxBroker {
         const upstoxData = structuredData.NSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`][instrument.instrument_type];
         this.instrumentDataSearchMap[upstoxData.tradingsymbol] ={...upstoxData, ...instrument}; 
         
-      }else if( instrument.segment === "INDICES" && instrument.exchange === "NSE" && (instrument.name === "NIFTY 50" || instrument.name === "NIFTY BANK" || instrument.name === "NIFTY FIN SERVICE")){
+      }else if(instrument.segment === "BFO-OPT" && (instrument.name === "BANKEX" || instrument.name === "SENSEX") && (instrument.instrument_type === "PE" || instrument.instrument_type === "CE") &&structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`] && structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`][instrument.instrument_type]){
+        structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`][instrument.instrument_type].ltpToken = instrument.instrument_token;
+
+        //add ltp token to subscribed instruments list
+        this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        //create a map with symbol from broker as key and info from broker + info from kite as value
+        const upstoxData = structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`][instrument.instrument_type];
+        this.instrumentDataSearchMap[upstoxData.tradingsymbol] ={...upstoxData, ...instrument}; 
+        
+      }else if( instrument.segment === "INDICES" ){
         if (instrument.name === "NIFTY 50") {
           structuredData.NSE.INDEX.NIFTY.ltpToken = instrument.instrument_token;
           this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
         }
-        if (instrument.name === "NIFTY BANK"){
+        else if (instrument.name === "NIFTY BANK"){
           structuredData.NSE.INDEX.BANKNIFTY.ltpToken = instrument.instrument_token;
           this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
         }
-        if (instrument.name === "NIFTY FIN SERVICE") {
+        else if (instrument.name === "NIFTY FIN SERVICE") {
           structuredData.NSE.INDEX.FINNIFTY.ltpToken = instrument.instrument_token;
           this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
         }
-      }else if(instrument.segment === "NSE" && instrument.instrument_type === "EQ" &&structuredData.NSE.EQUITY[instrument.tradingsymbol]){
-        structuredData.NSE.EQUITY[instrument.tradingsymbol].ltpToken = instrument.instrument_token;
-        this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
-        
+        else if(instrument.name === "SENSEX") {
+          structuredData.BSE.INDEX.SENSEX.ltpToken = instrument.instrument_token;
+          this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        }
+        else if(instrument.name === "BSE INDEX BANKEX") {
+          structuredData.BSE.INDEX.BANKEX.ltpToken = instrument.instrument_token;
+          this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        }else if(instrument.name === "MCXCRUDEX") {
+          structuredData.MCX.INDEX.CRUDEOIL.ltpToken = instrument.instrument_token;
+          this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        }
+      }else if(instrument.instrument_type === "EQ" &&structuredData.NSE.EQUITY[instrument.tradingsymbol]){
+        if(instrument.segment === "NSE"){
+          structuredData.NSE.EQUITY[instrument.tradingsymbol].ltpToken = instrument.instrument_token;
+          this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        }else if(instrument.segment === "BSE"){
+          structuredData.BSE.EQUITY[instrument.tradingsymbol].ltpToken = instrument.instrument_token;
+          this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        }
+      }else if(instrument.segment === "MCX-OPT" && instrument.name === "CRUDEOIL" && structuredData.MCX[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`] && structuredData.MCX[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`][instrument.instrument_type]){
+        structuredData.MCX[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`][instrument.instrument_type].ltpToken = instrument.instrument_token;
 
+        //add ltp token to subscribed instruments list
+        this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        //create a map with symbol from broker as key and info from broker + info from kite as value
+        const upstoxData = structuredData.MCX[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`][instrument.instrument_type];
+        this.instrumentDataSearchMap[upstoxData.tradingsymbol] ={...upstoxData, ...instrument}; 
+        
       }
     })
 

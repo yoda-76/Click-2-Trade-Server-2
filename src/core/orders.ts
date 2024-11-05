@@ -81,12 +81,12 @@ export class OrderManager {
     return 
   }
 
-  private async getPositionByOrderDetails(accountId: string, orderDetails: OrderDetails) {
-    const upstoxBroker = UpstoxBroker.getInstance();
-    const position = await upstoxBroker.getPositionByOrderDetails(accountId, orderDetails);
-    // console.log("positions from broker", position);
-    return position;
-  }
+  // private async getPositionByOrderDetails(accountId: string, orderDetails: OrderDetails) {
+  //   const upstoxBroker = UpstoxBroker.getInstance();
+  //   const position = await upstoxBroker.getPositionByOrderDetails(accountId, orderDetails);
+  //   // console.log("positions from broker", position);
+  //   return position;
+  // }
 
   private updatePositions (accountId: string, position: any) {
     //search thru existing position of the account and update it
