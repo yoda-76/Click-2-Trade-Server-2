@@ -98,9 +98,15 @@ export const getFunds = async (req: Request, res: Response) => {
 
 export const getChildAccountByMasterUid = async (req: Request, res: Response) => {
   try {
-      const {id} = req.body
+      const id = req.body.master_u_id
+      if(!id){
+        return res.status(400).json({ error: "Invalid request." });
+      }
       const accountManager = AccountManager.getInstance();
       const masterAccountId = accountManager.getAuthenticatedAccountId(id);
+      if(!masterAccountId){
+        return res.status(400).json({ error: "Account not authenticated." });
+      }
       const childAccounts = await dbClient.getChildAccountsByMasterId(masterAccountId);
       res.json({message:"ok",childAccounts});
     } catch (error) {

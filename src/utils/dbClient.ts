@@ -191,7 +191,7 @@ class DBClient {
 
   async getChildAccountsByMasterId(master_id: string) {
     return prisma.childAccount.findMany({
-      where: { master_id },
+      where: { master_id: master_id },
     });
   }
   
