@@ -139,6 +139,11 @@ function routes(app: Express) {
     res.json({ data: accounts, msg: "ok" });
 });
 
+app.post("/api/upstox/webhook", async (req: Request, res: Response) => {
+  console.log(req.body);
+  console.log("/n/n",req)
+})
+
 }
 
 export default routes;
