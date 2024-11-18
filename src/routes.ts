@@ -13,6 +13,7 @@ import { getPrefrences, getUserDetails, updatePrefrences } from "./controller/us
 import { getOptionChainDashboard, optionChainAuthController, optionChainController, stopOptionChainProcessing } from "./controller/option-chain.controller";
 import { AngelOne } from "./brokers/angel/angel.service";
 
+import { redisClient } from './lib/redis';
 
 
 function routes(app: Express) {
@@ -141,7 +142,8 @@ function routes(app: Express) {
 
 app.post("/api/upstox/webhook", async (req: Request, res: Response) => {
   console.log(req.body);
-  console.log("/n/n",req)
+  // console.log("/n/n",req)
+  await redisClient.set("upstox_webhook", `web hook response ${new Date()} : ${JSON.stringify(req.body)}`);
   res.send("ok")
 })
 
