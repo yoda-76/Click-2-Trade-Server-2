@@ -142,6 +142,7 @@ function routes(app: Express) {
 app.post("/api/upstox/webhook", async (req: Request, res: Response) => {
   console.log(req.body);
   console.log("/n/n",req)
+  res.send("ok")
 })
 
 }
