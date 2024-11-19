@@ -25,6 +25,15 @@ export const addAccount = async (req: Request, res: Response) => {
   try {
     const user_id = res.locals.user.id;
     // console.log(user_id, req.body);
+    const accountExists=type==="MASTER" ? await dbClient.getMasterAccountByUid(u_id) : await dbClient.getChildAccountByUid(u_id);
+    const brokerIDExists=type==="MASTER" ? await dbClient.getMasterAccountByBrokerId(broker_id) : await dbClient.getChildAccountByBrokerId(broker_id);
+    if(accountExists || brokerIDExists){
+      return res.status(400).json({ error: "Unique identifier and Client ID must be unique" });
+    }
+
+
+
+
     const accountManager = AccountManager.getInstance();
     const account = await accountManager.addAccount(user_id, key, secret, broker, broker_id, type, master, u_id);
     res.json({message: "Account created successfully", u_id:account.u_id});

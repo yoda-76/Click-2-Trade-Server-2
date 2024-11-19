@@ -123,6 +123,12 @@ class DBClient {
     });
   }
 
+  async getMasterAccountByBrokerId(broker_id: string) {
+    return prisma.masterAccount.findUnique({
+      where: { broker_id },
+    })
+  }
+
 
   // child account
 
@@ -220,6 +226,12 @@ class DBClient {
     return prisma.childAccount.findMany({
       where: { master_id: master_id },
     });
+  }
+
+  async getChildAccountByBrokerId(broker_id: string) {
+    return prisma.childAccount.findUnique({
+      where: { broker_id },
+    })
   }
   
   async getChildAccounts() {
