@@ -91,21 +91,16 @@ export class AccountManager {
     }
 
     public async deleteMasterAccount(accountId: string) {
-      const account = this.authenticatedAccounts.get(accountId);
-      if (!account || account.expiresAt < new Date()) {
-        throw new Error('Account not authenticated');
+      if (!accountId ) {
+        throw new Error('account uid not found');
       }
-      await dbClient.deleteMasterAccount(account.id);
+      await dbClient.deleteMasterAccountByUid(accountId);
       this.authenticatedAccounts.delete(accountId);
       return true;
     }
 
     public async deleteChildAccount(accountId: string) {
-      const account = this.authenticatedAccounts.get(accountId);
-      if (!account || account.expiresAt < new Date()) {
-        throw new Error('Account not authenticated');
-      }
-      await dbClient.deleteChildAccount(account.id);
+      await dbClient.deleteChildAccountByUid(accountId);
       this.authenticatedAccounts.delete(accountId);
       return true;
     }

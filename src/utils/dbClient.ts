@@ -75,6 +75,12 @@ class DBClient {
     });
   }
 
+  async deleteMasterAccountByUid(u_id: string) {
+    return prisma.masterAccount.delete({
+      where: { u_id },
+    });
+  }
+
   async updateMasterAccountByUid(u_id: string, data: MasterAccount) {
     return prisma.masterAccount.update({
       where: { u_id },
@@ -156,7 +162,28 @@ class DBClient {
     });
   }
 
+  async deleteChildAccountByUid(u_id: string) {
+    return prisma.childAccount.delete({
+      where: { u_id },
+    });
+  }
+
+
   async updateChildAccountByUid(u_id: string, data: ChildAccount) {
+    return prisma.childAccount.update({
+      where: { u_id },
+      data,
+    });
+  }
+
+  async toggleChildAccountByUid(u_id: string, data: {active: boolean}) {
+    return prisma.childAccount.update({
+      where: { u_id },
+      data,
+    });
+  }
+  
+  async updateChildAccountMultiplierByUid(u_id: string, data: {multiplier: number}) {
     return prisma.childAccount.update({
       where: { u_id },
       data,

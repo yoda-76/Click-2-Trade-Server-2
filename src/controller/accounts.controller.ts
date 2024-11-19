@@ -38,7 +38,7 @@ export const deleteMasterAccount = async (req: Request, res: Response) => {
     const {master_u_id} = req.body
     try {
       const accountManager = AccountManager.getInstance();
-      await accountManager.deleteMasterAccount(`MASTER:${master_u_id}`);
+      await accountManager.deleteMasterAccount(master_u_id);
       res.json({message:"ok"});
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -48,7 +48,7 @@ export const deleteChildAccount = async (req: Request, res: Response) => {
     const {child_u_id} = req.body
     try {
       const accountManager = AccountManager.getInstance();
-      await accountManager.deleteChildAccount(`CHILD:${child_u_id}`);
+      await accountManager.deleteChildAccount(child_u_id);
       res.json({message:"ok"});
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -103,7 +103,8 @@ export const getChildAccountByMasterUid = async (req: Request, res: Response) =>
         return res.status(400).json({ error: "Invalid request." });
       }
       const accountManager = AccountManager.getInstance();
-      const masterAccountId = accountManager.getAuthenticatedAccountId(id);
+      const masterAccountId = accountManager.getAuthenticatedAccountsAsObject(id).id;
+      console.log(id, masterAccountId);
       if(!masterAccountId){
         return res.status(400).json({ error: "Account not authenticated." });
       }
@@ -118,10 +119,7 @@ export const getChildAccountByMasterUid = async (req: Request, res: Response) =>
 export const updateChildMultiplier = async (req: Request, res: Response) => {
   try {
     const {child_u_id, multiplier}:{child_u_id: string, multiplier: number} = req.body
-    const accountManager = AccountManager.getInstance();
-    const childAccountId = accountManager.getAuthenticatedAccountId(`CHILD:${child_u_id}`);
-    console.log(childAccountId);
-    await dbClient.updateChildAccountById(childAccountId, {multiplier});
+    await dbClient.updateChildAccountMultiplierByUid(child_u_id, {multiplier});
     res.json({message:"ok"});
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -131,9 +129,7 @@ export const updateChildMultiplier = async (req: Request, res: Response) => {
 export const toggleChildAccount = async (req: Request, res: Response) => {
   try {
     const {child_u_id, status}:{child_u_id: string, status: boolean} = req.body
-    const accountManager = AccountManager.getInstance();
-    const childAccountId = accountManager.getAuthenticatedAccountId(`CHILD:${child_u_id}`);
-    await dbClient.updateChildAccountById(childAccountId, {active: status});
+    await dbClient.toggleChildAccountByUid(child_u_id, {active: status});
     res.json({message:"ok"});
   } catch (error) {
     res.status(400).json({ error: error.message });
