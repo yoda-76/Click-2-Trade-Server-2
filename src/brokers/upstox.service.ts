@@ -171,7 +171,7 @@ export class UpstoxBroker {
               transaction_type: side,
               disclosed_quantity: 0,
               trigger_price: triggerPrice,
-              is_amo: true,
+              is_amo: false,
             },
           };
           //check if the quantity exceeds the freeze quqntity for that perticular index? if it does, then slice the order
