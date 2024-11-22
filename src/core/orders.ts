@@ -259,7 +259,7 @@ export class OrderManager {
   }
 
   // Exit a single position based on account ID and instrument identifier
-  public async exitSinglePosition(accountId: string, position: any): Promise<void> {
+  public async exitSinglePosition(accountId: string, position: any, ltp: number): Promise<void> {
     const accountManager = AccountManager.getInstance();
     const broker = accountManager.getBroker(accountId);
     if(position.netQty === 0 || position.netQty === "0" ) return;
@@ -270,11 +270,11 @@ export class OrderManager {
       expiry: position.expiry,
       strike: position.strike,
       optionType: position.optionType,
-      exchange: position.exchange==="NFO"?"NSE":position.exchange,
+      exchange: position.exchange==="NFO"?"NSE":position.exchange==="BFO"?"BSE":position.exchange,
       qty: position.netQty, 
-      price: 0, 
+      price: ltp, 
       triggerPrice: 0, 
-      orderType: "MARKET", 
+      orderType: position.exchange==="BFO"?"LIMIT":"MARKET", 
       side: position.netQty<0?"BUY":"SELL",
       productType: position.product
     }

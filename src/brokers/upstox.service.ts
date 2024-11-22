@@ -170,7 +170,7 @@ export class UpstoxBroker {
               order_type: orderType,
               transaction_type: side,
               disclosed_quantity: 0,
-              trigger_price: triggerPrice,
+              trigger_price: 0,
               is_amo: false,
             },
           };
@@ -273,7 +273,7 @@ export class UpstoxBroker {
             expiry: symbolDetails.expiry,                            // Expiry
             strike: symbolDetails.strike,                  // Option Type
             ltpToken: symbolDetails.ltpToken?symbolDetails.ltpToken:null,                        // LTP Token
-            exchange: symbolDetails.exchange,                     // Exchange
+            exchange: position.exchange,                     // Exchange
             action: null,                                    // Action (Buy/Sell based on qty)
             pnl: position.pnl,                               // PnL
             ltp: position.last_price,                        // LTP

@@ -50,10 +50,10 @@ export const getOrders = async (req: Request, res: Response) => {
 }
 
 export const squareoffSinglePositions = async (req: Request, res: Response) => {
-  const { account_id, position } = req.body;
+  const { account_id, position, ltp } = req.body;
   try {
     const orderManager = await OrderManager.getInstance();
-    await orderManager.exitSinglePosition(account_id, position);
+    await orderManager.exitSinglePosition(account_id, position, ltp);
     res.json({ message: "Position exited successfully" });
   } catch (error) {
     res.status(400).json({ error: error.message });

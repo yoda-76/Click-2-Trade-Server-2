@@ -111,6 +111,7 @@ export class AngelOne {
 
             const response = await axios(config);
             console.log(response.data);
+            if(!response.data.status) throw new Error(response.data.message);
             const access_token = response.data?.data?.jwtToken;
 
             const feedToken = response.data?.data?.feedToken;
@@ -129,7 +130,7 @@ export class AngelOne {
 
         } catch (error) {
             console.error("Error in handleWebhook:", error);
-            throw new Error(`Error authorizing with Dhan : ${error.message}`);
+            throw new Error(`Error authorizing with Angel : ${error.message}`);
         }
     }
     public getInstrumentDataAsObject() {
