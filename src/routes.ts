@@ -111,6 +111,17 @@ function routes(app: Express) {
         })
 
 
+        app.post("/api/get-angel-instrumentData", (req: Request, res: Response) => {
+          const angelBroker = AngelOne.getInstance();
+          const instrumentData = angelBroker.getInstrumentDataAsObject();
+          res.json(instrumentData);
+        })
+        app.post("/api/get-angel-instrumentDataSearchMap", (req: Request, res: Response) => {
+          const angelBroker = AngelOne.getInstance();
+          const instrumentDataSearchMap = angelBroker.getInstrumentDataSearchMapAsObject();
+          res.json(instrumentDataSearchMap);
+        })
+
         app.get("/api/get-tokens-to-be-subscribed", (req: Request, res: Response) => {
           const upstoxBroker = UpstoxBroker.getInstance();
           const tokens = upstoxBroker.getTokensToBeSubscribed();

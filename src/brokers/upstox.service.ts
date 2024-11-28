@@ -164,10 +164,10 @@ export class UpstoxBroker {
               quantity: slicedQty[i],
               product: productType==="I" || productType==="D" ? productType : productType==="INTRADAY"? "I" : "D",
               validity: "DAY",
-              price: orderType === "LIMIT" ? price : 0,
+              price: orderType != "MARKET" ? price : 0,
               tag: "string",
               instrument_token: key,
-              order_type: orderType,
+              order_type: orderType==="MARKET" ? "MARKET" : "LIMIT",
               transaction_type: side,
               disclosed_quantity: 0,
               trigger_price: 0,
@@ -298,7 +298,7 @@ export class UpstoxBroker {
         console.log("cp",convertedPositions);
         return convertedPositions
       } catch (error) {
-        
+        console.log(error)
       }
   }
 
@@ -555,33 +555,50 @@ export class UpstoxBroker {
         if (instrument.name === "NIFTY 50") {
           structuredData.NSE.INDEX.NIFTY.ltpToken = instrument.instrument_token;
           this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+          const upstoxData = structuredData.NSE.INDEX.NIFTY
+        this.instrumentDataSearchMap[upstoxData.tradingsymbol] ={...upstoxData, ...instrument}; 
+  
         }
         else if (instrument.name === "NIFTY BANK"){
           structuredData.NSE.INDEX.BANKNIFTY.ltpToken = instrument.instrument_token;
           this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+          const upstoxData = structuredData.NSE.INDEX.BANKNIFTY
+          this.instrumentDataSearchMap[upstoxData.tradingsymbol] ={...upstoxData, ...instrument};
         }
         else if (instrument.name === "NIFTY FIN SERVICE") {
           structuredData.NSE.INDEX.FINNIFTY.ltpToken = instrument.instrument_token;
           this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+          const upstoxData = structuredData.NSE.INDEX.FINNIFTY
+          this.instrumentDataSearchMap[upstoxData.tradingsymbol] ={...upstoxData, ...instrument};
         }
         else if(instrument.name === "SENSEX") {
           structuredData.BSE.INDEX.SENSEX.ltpToken = instrument.instrument_token;
           this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+          const upstoxData = structuredData.BSE.INDEX.SENSEX
+          this.instrumentDataSearchMap[upstoxData.tradingsymbol] ={...upstoxData, ...instrument};
         }
         else if(instrument.name === "BSE INDEX BANKEX") {
           structuredData.BSE.INDEX.BANKEX.ltpToken = instrument.instrument_token;
           this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+          const upstoxData = structuredData.BSE.INDEX.BANKEX
+          this.instrumentDataSearchMap[upstoxData.tradingsymbol] ={...upstoxData, ...instrument};
         }else if(instrument.name === "MCXCRUDEX") {
           structuredData.MCX.INDEX.CRUDEOIL.ltpToken = instrument.instrument_token;
           this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+          const upstoxData = structuredData.MCX.INDEX.CRUDEOIL
+          this.instrumentDataSearchMap[upstoxData.tradingsymbol] ={...upstoxData, ...instrument};
         }
       }else if(instrument.instrument_type === "EQ" &&structuredData.NSE.EQUITY[instrument.tradingsymbol]){
         if(instrument.segment === "NSE"){
           structuredData.NSE.EQUITY[instrument.tradingsymbol].ltpToken = instrument.instrument_token;
           this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+          const upstoxData = structuredData.NSE.EQUITY[instrument.tradingsymbol]
+          this.instrumentDataSearchMap[upstoxData.tradingsymbol] ={...upstoxData, ...instrument};
         }else if(instrument.segment === "BSE"){
           structuredData.BSE.EQUITY[instrument.tradingsymbol].ltpToken = instrument.instrument_token;
           this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+          const upstoxData = structuredData.BSE.EQUITY[instrument.tradingsymbol]
+          this.instrumentDataSearchMap[upstoxData.tradingsymbol] ={...upstoxData, ...instrument};
         }
       }else if(instrument.segment === "MCX-OPT" && instrument.name === "CRUDEOIL" && structuredData.MCX[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`] && structuredData.MCX[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`][instrument.instrument_type]){
         structuredData.MCX[instrument.name][`${instrument.expiry} : ${instrument.strike}.0`][instrument.instrument_type].ltpToken = instrument.instrument_token;

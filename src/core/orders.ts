@@ -265,7 +265,7 @@ export class OrderManager {
     if(position.netQty === 0 || position.netQty === "0" ) return;
     //convert position into orderDetail
     const orderDetails: OrderDetails = {
-      baseInstrument: position.baseInstrument,
+      baseInstrument: position.symbolName,
       instrumentType: position.instrumentType==="PE" || position.instrumentType==="CE" || position.instrumentType==="OPTIDX"? "OPT" : "EQ",
       expiry: position.expiry,
       strike: position.strike,

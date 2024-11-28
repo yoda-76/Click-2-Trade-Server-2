@@ -72,7 +72,7 @@ export class DhanBroker {
     }
 
     public getInstrumentDataSearchMapAsObject() {
-      console.log(this.instrumentDataSearchMap);
+      // console.log(this.instrumentDataSearchMap);
       return this.instrumentDataSearchMap;
     }
 
@@ -130,7 +130,22 @@ export class DhanBroker {
           "EQUITY": {},
           "BANKNIFTY": {},
           "FINNIFTY": {},
-          "NIFTY": {},
+          "NIFTY": {}
+        },
+        "BSE": {
+          "INDEX": {
+            "BANKEX": {},
+            "SENSEX": {}
+          },
+          "EQUITY": {},
+          "BANKEX": {},
+          "SENSEX": {}
+        },
+        "MCX": {
+          "INDEX": {
+            "CRUDEOIL": {}
+          },
+          "CRUDEOIL":{}
         }
       };
   
@@ -147,10 +162,12 @@ export class DhanBroker {
         const exchange = SEM_EXM_EXCH_ID;
   
         // Index handling
-        if (instrument_type === "INDEX" && exchange === "NSE") {
+        if (instrument_type === "INDEX") {
           if (name === "NIFTY") structuredData.NSE.INDEX.NIFTY = instrument;
           if (name === "BANKNIFTY") structuredData.NSE.INDEX.BANKNIFTY = instrument;
           if (name === "NIFTY FIN SERVICE") structuredData.NSE.INDEX.FINNIFTY = instrument;
+          if (name === "BANKEX") structuredData.BSE.INDEX.BANKEX = instrument;
+          if (name === "SENSEX") structuredData.BSE.INDEX.SENSEX = instrument;
         }
         
         // Options handling
@@ -189,8 +206,39 @@ export class DhanBroker {
             });
           }
         }
-        else if(instrument_type === "EQUITY" && exchange === "NSE" && equitySymbols.includes(tradingsymbol)){
-          structuredData.NSE.EQUITY[tradingsymbol] = instrument;
+        else if(instrument_type === "OPTIDX" && exchange === "BSE") {
+          if (option_type === "CE") {
+            const baseSymbol = tradingsymbol.slice(0, -2);
+            // Match CE with PE
+            jsonArray.forEach(otherInstrument => {
+            const { SEM_INSTRUMENT_NAME, SEM_EXCH_INSTRUMENT_TYPE, SEM_TRADING_SYMBOL, SEM_OPTION_TYPE, SEM_EXPIRY_DATE, SEM_STRIKE_PRICE, SEM_EXM_EXCH_ID, SEM_CUSTOM_SYMBOL, SM_SYMBOL_NAME } = otherInstrument;
+
+            const name2 = SM_SYMBOL_NAME;
+            const instrument_type2 = SEM_INSTRUMENT_NAME;
+            const tradingsymbol2 = SEM_TRADING_SYMBOL;
+            const option_type2 = SEM_OPTION_TYPE;
+            const expiry2 = SEM_EXPIRY_DATE;
+            const strike2 = SEM_STRIKE_PRICE;
+            const exchange2 = SEM_EXM_EXCH_ID;
+            if (option_type2 === "PE") {
+              const otherBaseSymbol = tradingsymbol2.slice(0, -2);
+              // console.log(otherBaseSymbol);
+
+              if (baseSymbol === otherBaseSymbol) {
+                if (tradingsymbol.includes("BANKEX")) {
+                  // console.log(instrument, otherInstrument);
+                  structuredData.BSE.BANKEX[`${expiry.split(" ")[0]} : ${strike}`] = { CE: instrument, PE: otherInstrument };
+                } 
+                else if (tradingsymbol.includes("SENSEX")) {
+                  structuredData.BSE.SENSEX[`${expiry.split(" ")[0]} : ${strike}`] = { CE: instrument, PE: otherInstrument };
+                } 
+              }
+            }
+            });
+          }
+        }
+        else if(instrument_type === "EQUITY" && (exchange === "NSE"||exchange === "BSE") && equitySymbols.includes(tradingsymbol)){
+          structuredData[exchange].EQUITY[tradingsymbol] = instrument;
         }
       });
   
@@ -204,7 +252,18 @@ export class DhanBroker {
           const dhanData = structuredData.NSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.00000`][instrument.instrument_type];
           this.instrumentDataSearchMap[dhanData.SEM_SMST_SECURITY_ID] ={...dhanData, ...instrument}; 
           
-        }else if( instrument.segment === "INDICES" && instrument.exchange === "NSE" && (instrument.name === "NIFTY 50" || instrument.name === "NIFTY BANK" || instrument.name === "NIFTY FIN SERVICE")){
+        }
+        else if(instrument.segment === "BFO-OPT" && (instrument.name === "BANKEX" || instrument.name === "SENSEX") && (instrument.instrument_type === "PE" || instrument.instrument_type === "CE") && structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.00000`] && structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.00000`][instrument.instrument_type]){
+          // console.log(structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.00000`].PE )
+          // console.log(instrument.instrument_type, "\n\n\n\n")
+          // const test = structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.00000`][instrument.instrument_type]
+          structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.00000`][instrument.instrument_type].ltpToken = instrument.instrument_token;
+          //create a map with symbol from broker as key and info from broker + info from kite as value
+          const dhanData = structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}.00000`][instrument.instrument_type];
+          this.instrumentDataSearchMap[dhanData.SEM_SMST_SECURITY_ID] ={...dhanData, ...instrument}; 
+          
+        }
+        else if( instrument.segment === "INDICES" && instrument.exchange === "NSE" && (instrument.name === "NIFTY 50" || instrument.name === "NIFTY BANK" || instrument.name === "NIFTY FIN SERVICE")){
           if (instrument.name === "NIFTY 50") {
             structuredData.NSE.INDEX.NIFTY.ltpToken = instrument.instrument_token;
             // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
@@ -217,8 +276,16 @@ export class DhanBroker {
             structuredData.NSE.INDEX.FINNIFTY.ltpToken = instrument.instrument_token;
             // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
           }
-        }else if(instrument.segment === "NSE" && instrument.instrument_type === "EQ" &&structuredData.NSE.EQUITY[instrument.tradingsymbol]){
-          structuredData.NSE.EQUITY[instrument.tradingsymbol].ltpToken = instrument.instrument_token;
+        }else if( instrument.instrument_type === "EQ" &&(structuredData.NSE.EQUITY[instrument.tradingsymbol] || structuredData.BSE.EQUITY[instrument.tradingsymbol])){
+          if(instrument.segment==="BSE"){
+            structuredData.BSE.EQUITY[instrument.tradingsymbol].ltpToken = instrument.instrument_token;
+            const dhanData = structuredData.BSE.EQUITY[instrument.tradingsymbol];
+            this.instrumentDataSearchMap[dhanData.SEM_SMST_SECURITY_ID] = {...dhanData, ...instrument};
+          }else if(instrument.segment==="NSE"){
+            structuredData.NSE.EQUITY[instrument.tradingsymbol].ltpToken = instrument.instrument_token;
+            const dhanData = structuredData.NSE.EQUITY[instrument.tradingsymbol];
+            this.instrumentDataSearchMap[dhanData.SEM_SMST_SECURITY_ID] = {...dhanData, ...instrument};
+          }
           // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
         }
       })
@@ -243,16 +310,32 @@ export class DhanBroker {
         console.log(orderDetails);
         let key="";
         let instrument: any = {};
+        let exchangeSegment;
         if(exchange === "BSE"){
-          throw new Error('BSE not supported');
+          if(instrumentType === "OPT"){
+            // console.log(this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.00000`][optionType]);
+            instrument = this.instrumentData[exchange][baseInstrument][`${expiry} : ${strike}.00000`][optionType];
+            key=  instrument.SEM_SMST_SECURITY_ID
+            exchangeSegment = exchange==="BSE"? "NSE_FNO": "BSE_FNO";
+          }else if(instrumentType === "EQ"){
+            instrument = this.instrumentData[exchange].EQUITY[baseInstrument];
+            key=  instrument.SEM_SMST_SECURITY_ID
+            exchangeSegment = exchange==="BSE"? "NSE_EQ": "BSE_EQ";
+          }else if(instrumentType === "FUT"){
+            throw new Error('Futures not supported');
+          }else{ 
+            throw new Error('Instrument type not supported');
+          }
         }
         if(instrumentType === "OPT"){
           // console.log(this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.00000`][optionType]);
-          instrument = this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.00000`][optionType];
-          key=  this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.00000`][optionType].SEM_SMST_SECURITY_ID
+          instrument = this.instrumentData[exchange][baseInstrument][`${expiry} : ${strike}.00000`][optionType];
+          key=  instrument.SEM_SMST_SECURITY_ID
+          exchangeSegment = exchange==="NSE"? "NSE_FNO": "BSE_FNO";
         }else if(instrumentType === "EQ"){
-          instrument = this.instrumentData.NSE.EQUITY[baseInstrument];
-          key=  this.instrumentData.NSE.EQUITY[baseInstrument].SEM_SMST_SECURITY_ID
+          instrument = this.instrumentData[exchange].EQUITY[baseInstrument];
+          key=  instrument.SEM_SMST_SECURITY_ID
+          exchangeSegment = exchange==="NSE"? "NSE_EQ": "BSE_EQ";
         }else if(instrumentType === "FUT"){
           throw new Error('Futures not supported');
         }else{ 
@@ -260,7 +343,13 @@ export class DhanBroker {
         }
 
         const slicedQty = sliceOrderQuantity(qty, baseInstrument);
-        const exchangeSegment = instrumentType === "OPT"? "NSE_FNO" : "NSE_EQ";
+        // const exchangeSegment = instrumentType === "OPT"?exchange==="NSE"? "NSE_FNO": "BSE_FNO" : "NSE_EQ";
+        
+        // if(instrumentType === "OPT"){
+        //   exchangeSegment = exchange==="NSE"? "NSE_FNO": "BSE_FNO";
+        // }else if(instrumentType === "EQ"){
+        //   exchangeSegment = exchange==="NSE"? "NSE_EQ": "BSE_EQ";
+        // }
         
 
         console.log(slicedQty);
@@ -278,13 +367,13 @@ export class DhanBroker {
               transactionType: side,
               exchangeSegment,
               productType: (productType==="I" || productType==="INTRADAY")?"INTRADAY":"MARGIN",
-              orderType,
+              orderType: orderType==="MARKET"?"MARKET":"LIMIT",
               validity: 'DAY',
               tradingSymbol: instrument.SEM_TRADING_SYMBOL,
               securityId: key,
               quantity: slicedQty[i],
               disclosedQuantity: 0,
-              price: orderType==="LIMIT"?triggerPrice:0,
+              price: orderType!="MARKET"?price:0,
               // afterMarketOrder: true
             }
           };
