@@ -145,7 +145,7 @@ export class AngelOne {
     private async loadInstrumentData() {
         // Load instruments from CSV file
         const rawInstrumentsDataDownloadLink = "https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json";
-        const filePath = path.join(__dirname, './instruments.JSON');
+        const filePath = path.join(__dirname,"..", "..","..","..", './instruments.JSON');
 
         // Function to download the CSV file
         const downloadCSV = async () => {
@@ -183,6 +183,8 @@ export class AngelOne {
         const kiteInstruments = await fetchInstruments(process.env.KITE_API_KEY, kiteAccessToken);
         const structuredData = this.structureInstrumentData(jsonData, kiteInstruments);  // Structure the data
         this.instrumentData = structuredData
+        // this.instrumentData = jsonData
+
         console.log("dhan instrument data is loaded");
 
     }
@@ -191,17 +193,32 @@ export class AngelOne {
         console.log(kiteInstruments, "length:", jsonArray.length);
         const structuredData: Record<string, any> = {
             "NSE": {
-                "INDEX": {
-                    "NIFTY": {},
-                    "BANKNIFTY": {},
-                    "FINNIFTY": {},
-                },
-                "EQUITY": {},
+              "INDEX": {
+                "NIFTY": {},
                 "BANKNIFTY": {},
                 "FINNIFTY": {},
-                "NIFTY": {},
+              },
+              "EQUITY": {},
+              "BANKNIFTY": {},
+              "FINNIFTY": {},
+              "NIFTY": {}
+            },
+            "BSE": {
+              "INDEX": {
+                "BANKEX": {},
+                "SENSEX": {}
+              },
+              "EQUITY": {},
+              "BANKEX": {},
+              "SENSEX": {}
+            },
+            "MCX": {
+              "INDEX": {
+                "CRUDEOIL": {}
+              },
+              "CRUDEOIL":{}
             }
-        };
+          };
 
         const isNifty50Option = /^NIFTY-[A-Za-z]{3}\d{4}-\d{5}-(CE|PE)$/;
 
@@ -213,13 +230,33 @@ export class AngelOne {
             const option_type = symbol.slice(-2); //extract from symbol
             const exchange = exch_seg;
             const expiry = convertDate(angelExpiry);
+        
 
             // Index handling
-            if (instrument_type === "AMXIDX" && exchange === "NSE") {
+            if (instrument_type === "AMXIDX") {
                 if (symbol === "Nifty 50") structuredData.NSE.INDEX.NIFTY = instrument;
                 if (symbol === "Nifty Bank") structuredData.NSE.INDEX.BANKNIFTY = instrument;
                 if (name === "Nifty Fin Service") structuredData.NSE.INDEX.FINNIFTY = instrument;
+                if (name === "BANKEX") structuredData.BSE.INDEX.BANKEX = instrument;
+                if (name === "SENSEX") structuredData.BSE.INDEX.SENSEX = instrument;
+
             }
+
+
+            // {
+            //     "token": "1147008",
+            //     "symbol": "BANKEX24DEC60900CE",
+            //     "name": "BANKEX",
+            //     "expiry": "30DEC2024",
+            //     "strike": "6090000.000000",
+            //     "lotsize": "15",
+            //     "instrumenttype": "OPTIDX",
+            //     "exch_seg": "BFO",
+            //     "tick_size": "5.000000"
+            // },
+            
+
+
 
             // Options handling
             // if(instrument_type === "OPTIDX" && exchange ==="NSE" && tradingsymbol.includes("BANKNIFTY")) console.log(name, instrument_type, tradingsymbol, option_type, expiry, strike, exchange, "\n", instrument);
@@ -255,8 +292,39 @@ export class AngelOne {
                     });
                 }
             }
+            else if(instrument_type === "OPTIDX" && exchange === "BFO") {
+                if (option_type === "CE") {
+                    const baseSymbol = tradingsymbol.slice(0, -2);
+                    // Match CE with PE
+                    jsonArray.forEach(otherInstrument => {
+                        const tradingsymbol2 = otherInstrument.symbol;
+                        const option_type2 = tradingsymbol2.slice(-2); //extr   act from symbol
+                        // console.log(option_type, option_type2, tradingsymbol, tradingsymbol2);
+                        // console.log("2nd, ",angelExpiry)
+
+                        // const expiry2 = convertDate(angelExpiry);
+
+                        if (option_type2 === "PE") {
+                            const otherBaseSymbol = tradingsymbol2.slice(0, -2);
+                            // console.log(otherBaseSymbol);
+
+                            if (baseSymbol === otherBaseSymbol) {
+                                if (tradingsymbol.includes("BANKEX")) {
+                                    // console.log(instrument, otherInstrument);
+                                    structuredData.BSE.BANKEX[`${expiry} : ${strike}`] = { CE: instrument, PE: otherInstrument };
+                                }
+                                else if (tradingsymbol.includes("SENSEX")) {
+                                    structuredData.BSE.SENSEX[`${expiry} : ${strike}`] = { CE: instrument, PE: otherInstrument };
+                                }
+                            }
+                        }
+                    });
+                }
+            }
             else if ( exchange === "NSE" && equitySymbols.includes(tradingsymbol.slice(0,-3)) && tradingsymbol.slice(-2) === "EQ" ) {
                 structuredData.NSE.EQUITY[tradingsymbol.slice(0,-3)] = instrument;
+            }else if(exchange === "BSE" && equitySymbols.includes(tradingsymbol.slice(0,-3))){
+                structuredData.BSE.EQUITY[tradingsymbol] = instrument;
             }
         });
 
@@ -264,29 +332,71 @@ export class AngelOne {
             if (instrument.segment === "NFO-OPT" && (instrument.name === "NIFTY" || instrument.name === "BANKNIFTY" || instrument.name === "FINNIFTY") && (instrument.instrument_type === "PE" || instrument.instrument_type === "CE") && structuredData.NSE[instrument.name][`${instrument.expiry} : ${instrument.strike}00.000000`] && structuredData.NSE[instrument.name][`${instrument.expiry} : ${instrument.strike}00.000000`][instrument.instrument_type]) {
                 structuredData.NSE[instrument.name][`${instrument.expiry} : ${instrument.strike}00.000000`][instrument.instrument_type].ltpToken = instrument.instrument_token;
 
-                //add ltp token to subscribed instruments list
-                // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
-                //create a map with symbol from broker as key and info from broker + info from kite as value
                 const angelData = structuredData.NSE[instrument.name][`${instrument.expiry} : ${instrument.strike}00.000000`][instrument.instrument_type];
                 this.instrumentDataSearchMap[angelData.token] = { ...angelData, ...instrument };
 
-            } else if (instrument.segment === "INDICES" && instrument.exchange === "NSE" && (instrument.name === "NIFTY 50" || instrument.name === "NIFTY BANK" || instrument.name === "NIFTY FIN SERVICE")) {
-                if (instrument.name === "NIFTY 50") {
-                    structuredData.NSE.INDEX.NIFTY.ltpToken = instrument.instrument_token;
-                    // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
-                }
-                if (instrument.name === "NIFTY BANK") {
-                    structuredData.NSE.INDEX.BANKNIFTY.ltpToken = instrument.instrument_token;
-                    // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
-                }
-                if (instrument.name === "NIFTY FIN SERVICE") {
-                    structuredData.NSE.INDEX.FINNIFTY.ltpToken = instrument.instrument_token;
-                    // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
-                }
-            } else if (instrument.segment === "NSE" && instrument.instrument_type === "EQ" && structuredData.NSE.EQUITY[instrument.tradingsymbol]) {
-                structuredData.NSE.EQUITY[instrument.tradingsymbol].ltpToken = instrument.instrument_token;
+            }else if(instrument.segment === "BFO-OPT" && (instrument.name === "BANKEX" || instrument.name === "SENSEX") && (instrument.instrument_type === "PE" || instrument.instrument_type === "CE") && structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}00.000000`] && structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}00.000000`][instrument.instrument_type]){
+                structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}00.000000`][instrument.instrument_type].ltpToken = instrument.instrument_token;
+                //add ltp token to subscribed instruments list
                 // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
-            }
+                //create a map with symbol from broker as key and info from broker + info from kite as value
+                const angelData = structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}00.000000`][instrument.instrument_type];
+                this.instrumentDataSearchMap[angelData.tradingsymbol] ={...angelData, ...instrument}; 
+                
+              } else if( instrument.segment === "INDICES" ){
+                if (instrument.name === "NIFTY 50") {
+                  structuredData.NSE.INDEX.NIFTY.ltpToken = instrument.instrument_token;
+                //   this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+                  const angelData = structuredData.NSE.INDEX.NIFTY
+                this.instrumentDataSearchMap[angelData.tradingsymbol] ={...angelData, ...instrument}; 
+          
+                }
+                else if (instrument.name === "NIFTY BANK"){
+                  structuredData.NSE.INDEX.BANKNIFTY.ltpToken = instrument.instrument_token;
+                //   this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+                  const angelData = structuredData.NSE.INDEX.BANKNIFTY
+                  this.instrumentDataSearchMap[angelData.tradingsymbol] ={...angelData, ...instrument};
+                }
+                else if (instrument.name === "NIFTY FIN SERVICE") {
+                  structuredData.NSE.INDEX.FINNIFTY.ltpToken = instrument.instrument_token;
+                //   this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+                  const angelData = structuredData.NSE.INDEX.FINNIFTY
+                  this.instrumentDataSearchMap[angelData.tradingsymbol] ={...angelData, ...instrument};
+                }
+                else if(instrument.name === "SENSEX") {
+                  structuredData.BSE.INDEX.SENSEX.ltpToken = instrument.instrument_token;
+                //   this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+                  const angelData = structuredData.BSE.INDEX.SENSEX
+                  this.instrumentDataSearchMap[angelData.tradingsymbol] ={...angelData, ...instrument};
+                }
+                else if(instrument.name === "BSE INDEX BANKEX") {
+                  structuredData.BSE.INDEX.BANKEX.ltpToken = instrument.instrument_token;
+                //   this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+                  const angelData = structuredData.BSE.INDEX.BANKEX
+                  this.instrumentDataSearchMap[angelData.tradingsymbol] ={...angelData, ...instrument};
+                }else if(instrument.name === "MCXCRUDEX") {
+                  structuredData.MCX.INDEX.CRUDEOIL.ltpToken = instrument.instrument_token;
+                //   this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+                  const angelData = structuredData.MCX.INDEX.CRUDEOIL
+                  this.instrumentDataSearchMap[angelData.tradingsymbol] ={...angelData, ...instrument};
+                }
+              } else if(instrument.instrument_type === "EQ" &&structuredData.NSE.EQUITY[instrument.tradingsymbol]){
+                if(instrument.segment === "NSE"){
+                  structuredData.NSE.EQUITY[instrument.tradingsymbol].ltpToken = instrument.instrument_token;
+                //   this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+                  const angelData = structuredData.NSE.EQUITY[instrument.tradingsymbol]
+                  this.instrumentDataSearchMap[angelData.tradingsymbol] ={...angelData, ...instrument};
+                }
+                // TODO: BSE EQ
+
+                // else if(instrument.segment === "BSE" &&instrument.tradingsymbol==="TITANBIO"){
+                //     console.log(instrument.tradingsymbol, structuredData.BSE.EQUITY[instrument.tradingsymbol])
+                //   structuredData.BSE.EQUITY[instrument.tradingsymbol].ltpToken = instrument.instrument_token;
+                // //   this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+                //   const angelData = structuredData.BSE.EQUITY[instrument.tradingsymbol]
+                //   this.instrumentDataSearchMap[angelData.tradingsymbol] ={...angelData, ...instrument};
+                // }
+              }
         })
 
         return structuredData;
@@ -309,22 +419,30 @@ export class AngelOne {
             console.log(orderDetails);
             let key = "";
             let instrument: any = {};
-            if (exchange === "BSE") {
-                throw new Error('BSE not supported');
-            }
+            // if (exchange === "BSE") {
+            //     throw new Error('BSE not supported');
+            // }
             if (instrumentType === "OPT") {
                 // console.log(this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.000000`][optionType]);
-                instrument = this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}00.000000`][optionType];
+                if (exchange === "NSE") {
+                    instrument = this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}00.000000`][optionType];
                 key = this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}00.000000`][optionType].token
-            } else if (instrumentType === "EQ") {
-                instrument = this.instrumentData.NSE.EQUITY[baseInstrument];
-                key = this.instrumentData.NSE.EQUITY[baseInstrument].token
-            } else if (instrumentType === "FUT") {
-                throw new Error('Futures not supported');
-            } else {
-                throw new Error('Instrument type not supported');
+            }else if(exchange === "BSE") {
+                instrument = this.instrumentData.BSE[baseInstrument][`${expiry} : ${strike}00.000000`][optionType];
+                key = this.instrumentData.BSE[baseInstrument][`${expiry} : ${strike}00.000000`][optionType].token
+                
             }
-
+            
+        } else if (instrumentType === "EQ") {
+            instrument = this.instrumentData.NSE.EQUITY[baseInstrument];
+            key = this.instrumentData.NSE.EQUITY[baseInstrument].token
+        } else if (instrumentType === "FUT") {
+            throw new Error('Futures not supported');
+        } else {
+            throw new Error('Instrument type not supported');
+        }
+        
+        console.log(instrument, key);
             const slicedQty = sliceOrderQuantity(qty, baseInstrument);
             const exchangeSegment = instrumentType === "OPT" ? "NFO" : "NSE";
 
@@ -346,7 +464,7 @@ export class AngelOne {
                         'X-PrivateKey': account.key
                     },
                     data: {
-                        variety:"NORMAL",
+                        variety:"AMO",
                         tradingsymbol:instrument.symbol,
                         symboltoken:instrument.token,
                         transactiontype:side,
@@ -362,7 +480,7 @@ export class AngelOne {
                 };
 
                 const response = await axios(config);
-                // console.log(response);
+                console.log(response);
                 return response.data.data.orderid;
             }
             return true;
