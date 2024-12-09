@@ -246,103 +246,7 @@ export class UpstoxBroker {
     }
   }
 
-  // position from broker [
-  //   0|server  |   {
-  //   0|server  |     exchange: 'NFO',
-  //   0|server  |     multiplier: 1,
-  //   0|server  |     value: 844683.06,
-  //   0|server  |     pnl: -11640.6,
-  //   0|server  |     product: 'D',
-  //   0|server  |     instrument_token: 'NSE_FO|46762',
-  //   0|server  |     average_price: 647.27,
-  //   0|server  |     buy_value: 0,
-  //   0|server  |     overnight_quantity: 1305,
-  //   0|server  |     day_buy_value: 0,
-  //   0|server  |     day_buy_price: 0,
-  //   0|server  |     overnight_buy_amount: 844687.4,
-  //   0|server  |     overnight_buy_quantity: 1305,
-  //   0|server  |     day_buy_quantity: 0,
-  //   0|server  |     day_sell_value: 0,
-  //   0|server  |     day_sell_price: 0,
-  //   0|server  |     overnight_sell_amount: 0,
-  //   0|server  |     overnight_sell_quantity: 0,
-  //   0|server  |     day_sell_quantity: 0,
-  //   0|server  |     quantity: 1305,
-  //   0|server  |     last_price: 638.35,
-  //   0|server  |     unrealised: -11640.6,
-  //   0|server  |     realised: 0,
-  //   0|server  |     sell_value: 0,
-  //   0|server  |     tradingsymbol: 'BANKNIFTY24DEC53000PE',
-  //   0|server  |     trading_symbol: 'BANKNIFTY24DEC53000PE',
-  //   0|server  |     close_price: 609.85,
-  //   0|server  |     buy_price: 647.27,
-  //   0|server  |     sell_price: 0
-  //   0|server  |   }
-  //   0|server  | ]
-  //   0|server  | cp [
-  //   0|server  |   {
-  //   0|server  |     netQty: 1305,
-  //   0|server  |     symbolName: 'BANKNIFTY24DEC53000PE',
-  //   0|server  |     baseInstrument: 'BANKNIFTY',
-  //   0|server  |     instrumentType: 'PE',
-  //   0|server  |     optionType: 'PE',
-  //   0|server  |     expiry: '2024-12-24',
-  //   0|server  |     strike: '53000',
-  //   0|server  |     ltpToken: '11971074',
-  //   0|server  |     exchange: 'NFO',
-  //   0|server  |     action: null,
-  //   0|server  |     pnl: -11640.6,
-  //   0|server  |     ltp: 638.35,
-  //   0|server  |     avgPrice: 647.27,
-  //   0|server  |     sl: null,
-  //   0|server  |     setSl: null,
-  //   0|server  |     target: null,
-  //   0|server  |     targetPrice: null,
-  //   0|server  |     stopLoss: null,
-  //   0|server  |     multiplier: 1,
-  //   0|server  |     buyPrice: 647.27,
-  //   0|server  |     sellPrice: 0,
-  //   0|server  |     buyQty: 0,
-  //   0|server  |     sellQty: 0,
-  //   0|server  |     buyValue: 0,
-  //   0|server  |     sellValue: 0,
-  //   0|server  |     realisedPnL: 0,
-  //   0|server  |     unrealisedPnL: -11640.6,
-  //   0|server  |     product: 'D'
-  //   0|server  |   }
-  //   0|server  | ]
-  //   0|server  | positions [
-  //   0|server  |   {
-  //   0|server  |     netQty: 1305,
-  //   0|server  |     symbolName: 'BANKNIFTY24DEC53000PE',
-  //   0|server  |     baseInstrument: 'BANKNIFTY',
-  //   0|server  |     instrumentType: 'PE',
-  //   0|server  |     optionType: 'PE',
-  //   0|server  |     expiry: '2024-12-24',
-  //   0|server  |     strike: '53000',
-  //   0|server  |     ltpToken: '11971074',
-  //   0|server  |     exchange: 'NFO',
-  //   0|server  |     action: null,
-  //   0|server  |     pnl: -11640.6,
-  //   0|server  |     ltp: 638.35,
-  //   0|server  |     avgPrice: 647.27,
-  //   0|server  |     sl: null,
-  //   0|server  |     setSl: null,
-  //   0|server  |     target: null,
-  //   0|server  |     targetPrice: null,
-  //   0|server  |     stopLoss: null,
-  //   0|server  |     multiplier: 1,
-  //   0|server  |     buyPrice: 647.27,
-  //   0|server  |     sellPrice: 0,
-  //   0|server  |     buyQty: 0,
-  //   0|server  |     sellQty: 0,
-  //   0|server  |     buyValue: 0,
-  //   0|server  |     sellValue: 0,
-  //   0|server  |     realisedPnL: 0,
-  //   0|server  |     unrealisedPnL: -11640.6,
-  //   0|server  |     product: 'D'
-  //   0|server  |   }
-  //   0|server  | ]
+ 
   public async getPositions(access_token: string) {
       try {
         console.log("at",access_token);
@@ -357,40 +261,43 @@ export class UpstoxBroker {
         };
         const response = await axios(config)
         console.log("position from broker",response.data.data);
-        let convertedPositions = response.data.data.map((position) => {
-          const symbolName = position.trading_symbol
-          const symbolDetails = this.instrumentDataSearchMap[symbolName]
-          return {
-            netQty: position.quantity,                       // Net Qty
-            symbolName: position.trading_symbol,             // Symbol name
-            baseInstrument: symbolDetails.name,                   // Base Instrument
-            instrumentType: symbolDetails.instrument_type,       // Instrument Type
-            optionType: symbolDetails.option_type,              //option type
-            expiry: symbolDetails.expiry,                            // Expiry
-            strike: symbolDetails.strike,                  // Option Type
-            ltpToken: symbolDetails.ltpToken?symbolDetails.ltpToken:null,                        // LTP Token
-            exchange: position.exchange,                     // Exchange
-            action: null,                                    // Action (Buy/Sell based on qty)
-            pnl: position.pnl,                               // PnL
-            ltp: position.last_price,                        // LTP
-            avgPrice: position.average_price,                // Avg Price
-            sl: null,                                        // SL (manual entry)
-            setSl: null,                                     // Set SL (manual entry)
-            target: null,                                    // Target (manual entry)
-            targetPrice: null,                               // Target Price (manual entry)
-            stopLoss: null,    
-            multiplier: position.multiplier,                              // Stop Loss (manual entry)
-            buyPrice: position.buy_price,                    // Buy Price
-            sellPrice: position.sell_price,                  // Sell Price
-            buyQty: position.day_buy_quantity,               // Buy Qty
-            sellQty: position.day_sell_quantity,  
-            overnightBuyValue: position.overnight_buy_amount, // Overnight Buy Qty
-            overnightSellValue: position.overnight_sell_amount,
-            buyValue: position.buy_value,
-            sellValue: position.sell_value,                  // Sell Qty
-            realisedPnL: position.realised,                  // Realised P&L
-            unrealisedPnL: position.unrealised,              // Unrealised P&L
-            product: position.product                        // Product
+        let convertedPositions = []
+        response.data.data.map((position) => {
+          if(["NFO", "BFO", "NSE", "BSE"].includes(position.exchange)){
+            const symbolName = position.trading_symbol
+            const symbolDetails = this.instrumentDataSearchMap[symbolName]
+            symbolDetails&&convertedPositions.push({
+              netQty: position.quantity,                       // Net Qty
+              symbolName: position.trading_symbol,             // Symbol name
+              baseInstrument: symbolDetails.name,                   // Base Instrument
+              instrumentType: symbolDetails.instrument_type,       // Instrument Type
+              optionType: symbolDetails.option_type,              //option type
+              expiry: symbolDetails.expiry,                            // Expiry
+              strike: symbolDetails.strike,                  // Option Type
+              ltpToken: symbolDetails.ltpToken?symbolDetails.ltpToken:null,                        // LTP Token
+              exchange: position.exchange,                     // Exchange
+              action: null,                                    // Action (Buy/Sell based on qty)
+              pnl: position.pnl,                               // PnL
+              ltp: position.last_price,                        // LTP
+              avgPrice: position.average_price,                // Avg Price
+              sl: null,                                        // SL (manual entry)
+              setSl: null,                                     // Set SL (manual entry)
+              target: null,                                    // Target (manual entry)
+              targetPrice: null,                               // Target Price (manual entry)
+              stopLoss: null,    
+              multiplier: position.multiplier,                              // Stop Loss (manual entry)
+              buyPrice: position.buy_price,                    // Buy Price
+              sellPrice: position.sell_price,                  // Sell Price
+              buyQty: position.day_buy_quantity,               // Buy Qty
+              sellQty: position.day_sell_quantity,  
+              overnightBuyValue: position.overnight_buy_amount, // Overnight Buy Qty
+              overnightSellValue: position.overnight_sell_amount,
+              buyValue: position.buy_value,
+              sellValue: position.sell_value,                  // Sell Qty
+              realisedPnL: position.realised,                  // Realised P&L
+              unrealisedPnL: position.unrealised,              // Unrealised P&L
+              product: position.product                        // Product
+            })
           }
         })
         console.log("cp",convertedPositions);
