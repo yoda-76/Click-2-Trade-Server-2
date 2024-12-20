@@ -5,7 +5,7 @@ import { createServer } from "node:http";
 import { DhanBroker } from "./brokers/dhan/dhan.service";
 
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3002;
 
 const app = express();
 const server = createServer(app);
@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 //cors stuff
-const allowedOrigins = ['http://localhost:5173', 'https://www.oidelta.com', 'https://oidelta.com', 'https://cliq2trade.com', 'https://www.cliq2trade.com', "https://api.upstox.com"]; // Define your allowed origins
+const allowedOrigins = ['http://localhost:5173','http://127.0.0.1:5173', 'https://www.oidelta.com', 'https://oidelta.com', 'https://cliq2trade.com', 'https://www.cliq2trade.com', "https://api.upstox.com"]; // Define your allowed origins
 app.use((req, res, next) => {
   const origin = req.headers.origin; // Get the origin of the incoming request
   
