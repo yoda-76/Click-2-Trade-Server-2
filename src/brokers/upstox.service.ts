@@ -666,21 +666,21 @@ export class UpstoxBroker {
 
       } else if (instrument.segment === "NFO-OPT" && structuredData.NSE.EQUITY_OPTION[instrument.name] && structuredData.NSE.EQUITY_OPTION[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`] && structuredData.NSE.EQUITY_OPTION[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type]) {
         structuredData.NSE.EQUITY_OPTION[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type].ltpToken = instrument.instrument_token;
-        this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
         //create a map with symbol from broker as key and info from broker + info from kite as value
         const upstoxData = structuredData.NSE.EQUITY_OPTION[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type];
         // generate coustom trading symbol  
         this.instrumentDataSearchMap[upstoxData.instrument_key] = { ...upstoxData, ...instrument };
       }else if(instrument.segment === "NFO-FUT" && (instrument.name === "NIFTY" || instrument.name === "BANKNIFTY" || instrument.name === "FINNIFTY") && structuredData.NSE.FUTURES[instrument.name][`${instrument.expiry} : ${instrument.strike}`]){
         structuredData.NSE.FUTURES[instrument.name][`${instrument.expiry} : ${instrument.strike}`].ltpToken = instrument.instrument_token;
-        this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
         //create a map with symbol from broker as key and info from broker + info from kite as value
         const upstoxData = structuredData.NSE.FUTURES[instrument.name][`${instrument.expiry} : ${instrument.strike}`];
         // generate coustom trading symbol  
         this.instrumentDataSearchMap[upstoxData.instrument_key] = { ...upstoxData, ...instrument };
       }else if(instrument.segment === "NFO-FUT" && structuredData.NSE.FUTURES.EQUITY[instrument.name] && structuredData.NSE.FUTURES.EQUITY[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`]){
         structuredData.NSE.FUTURES.EQUITY[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`].ltpToken = instrument.instrument_token;
-        this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
         //create a map with symbol from broker as key and info from broker + info from kite as value
         const upstoxData = structuredData.NSE.FUTURES.EQUITY[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`];
         // generate coustom trading symbol  
@@ -698,7 +698,7 @@ export class UpstoxBroker {
         structuredData.BSE.FUTURES[instrument.name][`${instrument.expiry} : ${instrument.strike}`].ltpToken = instrument.instrument_token;
 
         //add ltp token to subscribed instruments list
-        this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
         //create a map with symbol from broker as key and info from broker + info from kite as value
         const upstoxData = structuredData.BSE.FUTURES[instrument.name][`${instrument.expiry} : ${instrument.strike}`];
         this.instrumentDataSearchMap[upstoxData.instrument_key] = { ...upstoxData, ...instrument };
@@ -757,7 +757,7 @@ export class UpstoxBroker {
         structuredData.MCX[instrument.name][`${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type].ltpToken = instrument.instrument_token;
 
         //add ltp token to subscribed instruments list
-        this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
+        // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
         //create a map with symbol from broker as key and info from broker + info from kite as value
         const upstoxData = structuredData.MCX[instrument.name][`${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type];
         this.instrumentDataSearchMap[upstoxData.instrument_key] = { ...upstoxData, ...instrument };
