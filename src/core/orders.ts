@@ -266,7 +266,7 @@ export class OrderManager {
     //convert position into orderDetail
     const orderDetails: OrderDetails = {
       baseInstrument: position.baseInstrument,
-      instrumentType: position.instrumentType==="PE" || position.instrumentType==="CE" || position.instrumentType==="OPTIDX"? "OPT" : "EQ",
+      instrumentType: position.instrumentType==="PE" || position.instrumentType==="CE" || position.instrumentType==="OPTIDX"? "IDX-OPT" : "EQ",
       expiry: position.expiry,
       strike: position.strike,
       optionType: position.optionType,

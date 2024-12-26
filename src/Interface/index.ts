@@ -1,6 +1,6 @@
 export interface OrderDetails {
   baseInstrument: string;
-  instrumentType: "FUT" | "OPT" | "EQ";
+  instrumentType: "IDX-OPT"|"IDX-FUT"|"EQ-FUT"|"EQ-OPT"|"EQ";
   expiry: string | null;
   strike: number | null;
   optionType: "CE" | "PE" | null;

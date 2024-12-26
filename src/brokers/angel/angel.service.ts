@@ -422,7 +422,7 @@ export class AngelOne {
             // if (exchange === "BSE") {
             //     throw new Error('BSE not supported');
             // }
-            if (instrumentType === "OPT") {
+            if (instrumentType === "IDX-OPT") {
                 // console.log(this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.000000`][optionType]);
                 if (exchange === "NSE") {
                     instrument = this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}00.000000`][optionType];
@@ -436,7 +436,7 @@ export class AngelOne {
         } else if (instrumentType === "EQ") {
             instrument = this.instrumentData.NSE.EQUITY[baseInstrument];
             key = this.instrumentData.NSE.EQUITY[baseInstrument].token
-        } else if (instrumentType === "FUT") {
+        } else if (instrumentType === "IDX-FUT") {
             throw new Error('Futures not supported');
         } else {
             throw new Error('Instrument type not supported');
@@ -444,7 +444,7 @@ export class AngelOne {
         
         console.log(instrument, key);
             const slicedQty = sliceOrderQuantity(qty, baseInstrument);
-            const exchangeSegment = instrumentType === "OPT" ? "NFO" : "NSE";
+            const exchangeSegment = instrumentType === "IDX-OPT" ? "NFO" : "NSE";
 
 
             console.log(slicedQty);

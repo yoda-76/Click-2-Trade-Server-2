@@ -132,15 +132,15 @@ export class UpstoxBroker {
         throw new Error('Account not authenticated');
       }
       const { baseInstrument, instrumentType, expiry, strike, optionType, exchange, qty, price, triggerPrice, orderType, side, productType } = orderDetails;
-      console.log(orderDetails);
+      console.log(orderDetails, accountId);
       let key = "";
 
-      if (instrumentType === "OPT") {
+      if (instrumentType === "IDX-OPT") {
         console.log(this.instrumentData[exchange][baseInstrument][`${expiry} : ${strike}`][optionType]);
         key = this.instrumentData[exchange][baseInstrument][`${expiry} : ${strike}`][optionType].instrument_key
       } else if (instrumentType === "EQ") {
         key = this.instrumentData[exchange].EQUITY[baseInstrument].instrument_key
-      } else if (instrumentType === "FUT") {
+      } else if (instrumentType === "IDX-FUT") {
         throw new Error('Futures not supported');
       } else {
         throw new Error('Instrument type not supported');

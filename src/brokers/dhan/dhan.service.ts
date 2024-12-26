@@ -312,7 +312,7 @@ export class DhanBroker {
         let instrument: any = {};
         let exchangeSegment;
         if(exchange === "BSE"){
-          if(instrumentType === "OPT"){
+          if(instrumentType === "IDX-OPT"){
             // console.log(this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.00000`][optionType]);
             instrument = this.instrumentData[exchange][baseInstrument][`${expiry} : ${strike}.00000`][optionType];
             key=  instrument.SEM_SMST_SECURITY_ID
@@ -321,13 +321,13 @@ export class DhanBroker {
             instrument = this.instrumentData[exchange].EQUITY[baseInstrument];
             key=  instrument.SEM_SMST_SECURITY_ID
             exchangeSegment = exchange==="BSE"? "NSE_EQ": "BSE_EQ";
-          }else if(instrumentType === "FUT"){
+          }else if(instrumentType === "IDX-FUT"){
             throw new Error('Futures not supported');
           }else{ 
             throw new Error('Instrument type not supported');
           }
         }
-        if(instrumentType === "OPT"){
+        if(instrumentType === "IDX-OPT"){
           // console.log(this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.00000`][optionType]);
           instrument = this.instrumentData[exchange][baseInstrument][`${expiry} : ${strike}.00000`][optionType];
           key=  instrument.SEM_SMST_SECURITY_ID
@@ -336,7 +336,7 @@ export class DhanBroker {
           instrument = this.instrumentData[exchange].EQUITY[baseInstrument];
           key=  instrument.SEM_SMST_SECURITY_ID
           exchangeSegment = exchange==="NSE"? "NSE_EQ": "BSE_EQ";
-        }else if(instrumentType === "FUT"){
+        }else if(instrumentType === "IDX-FUT"){
           throw new Error('Futures not supported');
         }else{ 
           throw new Error('Instrument type not supported');
