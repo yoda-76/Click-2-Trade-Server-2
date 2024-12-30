@@ -33,6 +33,7 @@ export class UpstoxBroker {
     return UpstoxBroker.instance;
   }
 
+
   public getInstrumentDataAsObject() {
     // console.log(this.instrumentData);
     return this.instrumentData;
@@ -138,10 +139,18 @@ export class UpstoxBroker {
       if (instrumentType === "IDX-OPT") {
         console.log(this.instrumentData[exchange][baseInstrument][`${expiry} : ${strike}`][optionType]);
         key = this.instrumentData[exchange][baseInstrument][`${expiry} : ${strike}`][optionType].instrument_key
+      }else if(instrumentType === "EQ-OPT") {
+        console.log(this.instrumentData[exchange].EQUITY_OPTION[baseInstrument][`${expiry} : ${strike}`][optionType]);
+        key = this.instrumentData[exchange].EQUITY_OPTION[baseInstrument][`${expiry} : ${strike}`][optionType].instrument_key
       } else if (instrumentType === "EQ") {
+        console.log(this.instrumentData[exchange].EQUITY[baseInstrument])
         key = this.instrumentData[exchange].EQUITY[baseInstrument].instrument_key
       } else if (instrumentType === "IDX-FUT") {
-        throw new Error('Futures not supported');
+        console.log(this.instrumentData[exchange].FUTURES[baseInstrument][`${expiry} : ${strike}`]);
+        key = this.instrumentData[exchange].FUTURES[baseInstrument][`${expiry} : ${strike}`].instrument_key
+      }else if (instrumentType === "EQ-FUT") {
+        console.log(this.instrumentData[exchange].FUTURES.EQUITY[baseInstrument], `${expiry} : ${strike}`);
+        key = this.instrumentData[exchange].FUTURES.EQUITY[baseInstrument][`${expiry} : ${strike}`].instrument_key
       } else {
         throw new Error('Instrument type not supported');
       }
@@ -170,7 +179,7 @@ export class UpstoxBroker {
             transaction_type: side,
             disclosed_quantity: 0,
             trigger_price: 0,
-            is_amo: false,
+            is_amo: true,
           },
         };
         //check if the quantity exceeds the freeze quqntity for that perticular index? if it does, then slice the order
@@ -580,16 +589,16 @@ export class UpstoxBroker {
           else if (equitySymbols.includes(underlying_symbol)) {
             if (instrument_type === "CE") {
 
-              if (!structuredData.NSE.EQUITY_OPTION[underlying_symbol][`${underlying_symbol} : ${expiry} : ${strike}`]) {
-                structuredData.NSE.EQUITY_OPTION[underlying_symbol][`${underlying_symbol} : ${expiry} : ${strike}`] = { CE: instrument, PE: null };
+              if (!structuredData.NSE.EQUITY_OPTION[underlying_symbol][`${expiry} : ${strike}`]) {
+                structuredData.NSE.EQUITY_OPTION[underlying_symbol][`${expiry} : ${strike}`] = { CE: instrument, PE: null };
               } else {
-                structuredData.NSE.EQUITY_OPTION[underlying_symbol][`${underlying_symbol} : ${expiry} : ${strike}`].CE = instrument;
+                structuredData.NSE.EQUITY_OPTION[underlying_symbol][`${expiry} : ${strike}`].CE = instrument;
               }
             } else if (instrument_type === "PE") {
-              if (!structuredData.NSE.EQUITY_OPTION[underlying_symbol][`${underlying_symbol} : ${expiry} : ${strike}`]) {
-                structuredData.NSE.EQUITY_OPTION[underlying_symbol][`${underlying_symbol} : ${expiry} : ${strike}`] = { CE: null, PE: instrument };
+              if (!structuredData.NSE.EQUITY_OPTION[underlying_symbol][`${expiry} : ${strike}`]) {
+                structuredData.NSE.EQUITY_OPTION[underlying_symbol][`${expiry} : ${strike}`] = { CE: null, PE: instrument };
               } else {
-                structuredData.NSE.EQUITY_OPTION[underlying_symbol][`${underlying_symbol} : ${expiry} : ${strike}`].PE = instrument;
+                structuredData.NSE.EQUITY_OPTION[underlying_symbol][`${expiry} : ${strike}`].PE = instrument;
               }
             }
           }
@@ -618,10 +627,10 @@ export class UpstoxBroker {
             }
           }
           else if (equitySymbols.includes(underlying_symbol)) {
-            if (segment === "NSE_FO" && !structuredData.NSE.FUTURES.EQUITY[underlying_symbol][`${underlying_symbol} : ${expiry} : ${strike}`]) {
-              structuredData.NSE.FUTURES.EQUITY[underlying_symbol][`${underlying_symbol} : ${expiry} : ${strike}`] = instrument;
-            } else if (segment === "BSE_FO" && !structuredData.BSE.FUTURES.EQUITY[underlying_symbol][`${underlying_symbol} : ${expiry} : ${strike}`]) {
-              structuredData.BSE.FUTURES.EQUITY[underlying_symbol][`${underlying_symbol} : ${expiry} : ${strike}`] = instrument;
+            if (segment === "NSE_FO" && !structuredData.NSE.FUTURES.EQUITY[underlying_symbol][`${expiry} : ${strike}`]) {
+              structuredData.NSE.FUTURES.EQUITY[underlying_symbol][`${expiry} : ${strike}`] = instrument;
+            } else if (segment === "BSE_FO" && !structuredData.BSE.FUTURES.EQUITY[underlying_symbol][`${expiry} : ${strike}`]) {
+              structuredData.BSE.FUTURES.EQUITY[underlying_symbol][`${expiry} : ${strike}`] = instrument;
             }
           }
         }
@@ -664,11 +673,11 @@ export class UpstoxBroker {
         // generate coustom trading symbol  
         this.instrumentDataSearchMap[upstoxData.instrument_key] = { ...upstoxData, ...instrument };
 
-      } else if (instrument.segment === "NFO-OPT" && structuredData.NSE.EQUITY_OPTION[instrument.name] && structuredData.NSE.EQUITY_OPTION[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`] && structuredData.NSE.EQUITY_OPTION[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type]) {
-        structuredData.NSE.EQUITY_OPTION[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type].ltpToken = instrument.instrument_token;
+      } else if (instrument.segment === "NFO-OPT" && structuredData.NSE.EQUITY_OPTION[instrument.name] && structuredData.NSE.EQUITY_OPTION[instrument.name][`${instrument.expiry} : ${instrument.strike}`] && structuredData.NSE.EQUITY_OPTION[instrument.name][`${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type]) {
+        structuredData.NSE.EQUITY_OPTION[instrument.name][`${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type].ltpToken = instrument.instrument_token;
         // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
         //create a map with symbol from broker as key and info from broker + info from kite as value
-        const upstoxData = structuredData.NSE.EQUITY_OPTION[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type];
+        const upstoxData = structuredData.NSE.EQUITY_OPTION[instrument.name][`${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type];
         // generate coustom trading symbol  
         this.instrumentDataSearchMap[upstoxData.instrument_key] = { ...upstoxData, ...instrument };
       }else if(instrument.segment === "NFO-FUT" && (instrument.name === "NIFTY" || instrument.name === "BANKNIFTY" || instrument.name === "FINNIFTY") && structuredData.NSE.FUTURES[instrument.name][`${instrument.expiry} : ${instrument.strike}`]){
@@ -678,11 +687,11 @@ export class UpstoxBroker {
         const upstoxData = structuredData.NSE.FUTURES[instrument.name][`${instrument.expiry} : ${instrument.strike}`];
         // generate coustom trading symbol  
         this.instrumentDataSearchMap[upstoxData.instrument_key] = { ...upstoxData, ...instrument };
-      }else if(instrument.segment === "NFO-FUT" && structuredData.NSE.FUTURES.EQUITY[instrument.name] && structuredData.NSE.FUTURES.EQUITY[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`]){
-        structuredData.NSE.FUTURES.EQUITY[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`].ltpToken = instrument.instrument_token;
+      }else if(instrument.segment === "NFO-FUT" && structuredData.NSE.FUTURES.EQUITY[instrument.name] && structuredData.NSE.FUTURES.EQUITY[instrument.name][`${instrument.expiry} : ${instrument.strike}`]){
+        structuredData.NSE.FUTURES.EQUITY[instrument.name][`${instrument.expiry} : ${instrument.strike}`].ltpToken = instrument.instrument_token;
         // this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
         //create a map with symbol from broker as key and info from broker + info from kite as value
-        const upstoxData = structuredData.NSE.FUTURES.EQUITY[instrument.name][`${instrument.name} : ${instrument.expiry} : ${instrument.strike}`];
+        const upstoxData = structuredData.NSE.FUTURES.EQUITY[instrument.name][`${instrument.expiry} : ${instrument.strike}`];
         // generate coustom trading symbol  
         this.instrumentDataSearchMap[upstoxData.instrument_key] = { ...upstoxData, ...instrument };
       } else if (instrument.segment === "BFO-OPT" && (instrument.name === "BANKEX" || instrument.name === "SENSEX") && (instrument.instrument_type === "PE" || instrument.instrument_type === "CE") && structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}`] && structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type]) {

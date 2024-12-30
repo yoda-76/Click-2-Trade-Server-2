@@ -262,21 +262,40 @@ export class OrderManager {
   public async exitSinglePosition(accountId: string, position: any, ltp: number): Promise<void> {
     const accountManager = AccountManager.getInstance();
     const broker = accountManager.getBroker(accountId);
+    let orderDetails: OrderDetails;
     if(position.netQty === 0 || position.netQty === "0" ) return;
     //convert position into orderDetail
-    const orderDetails: OrderDetails = {
-      baseInstrument: position.baseInstrument,
-      instrumentType: position.instrumentType==="PE" || position.instrumentType==="CE" || position.instrumentType==="OPTIDX"? "IDX-OPT" : "EQ",
-      expiry: position.expiry,
-      strike: position.strike,
-      optionType: position.optionType,
-      exchange: position.exchange==="NFO"?"NSE":position.exchange==="BFO"?"BSE":position.exchange,
-      qty: position.netQty, 
-      price: ltp, 
-      triggerPrice: 0, 
-      orderType: position.exchange==="BFO"?"LIMIT":"MARKET", 
-      side: position.netQty<0?"BUY":"SELL",
-      productType: position.product
+    if(position.instrumentType==="PE" || position.instrumentType==="CE" || position.instrumentType==="OPTIDX"){
+      orderDetails = {
+        baseInstrument: position.baseInstrument,
+        instrumentType: "IDX-OPT",
+        expiry: position.expiry,
+        strike: position.strike,
+        optionType: position.optionType,
+        exchange: position.exchange==="NFO"?"NSE":position.exchange==="BFO"?"BSE":position.exchange,
+        qty: position.netQty, 
+        price: ltp, 
+        triggerPrice: 0, 
+        orderType: position.exchange==="BFO"?"LIMIT":"MARKET", 
+        side: position.netQty<0?"BUY":"SELL",
+        productType: position.product
+      }
+    }else if(position.instrumentType==="EQ"){
+      orderDetails = {
+        baseInstrument: position.symbolName,
+        instrumentType: "EQ",
+        expiry: position.expiry,
+        strike: position.strike,
+        optionType: position.optionType,
+        exchange: position.exchange==="NFO"?"NSE":position.exchange==="BFO"?"BSE":position.exchange,
+        qty: position.netQty, 
+        price: ltp, 
+        triggerPrice: 0, 
+        orderType: position.exchange==="BFO"?"LIMIT":"MARKET", 
+        side: position.netQty<0?"BUY":"SELL",
+        productType: position.product
+      }
+      //complete it for IDX-FUT, EQ-FUT and EQ-OPT
     }
     const order = this.placeOrder(accountId, orderDetails);
   }
