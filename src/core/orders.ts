@@ -295,7 +295,7 @@ export class OrderManager {
         side: position.netQty<0?"BUY":"SELL",
         productType: position.product
       }
-      //complete it for IDX-FUT, EQ-FUT and EQ-OPT
+      //complete it for IDX-FUT, EQ-FUT and EQ-OPT 
     }
     const order = this.placeOrder(accountId, orderDetails);
   }
