@@ -695,7 +695,7 @@ export class UpstoxBroker {
         // generate coustom trading symbol  
         this.instrumentDataSearchMap[upstoxData.instrument_key] = { ...upstoxData, ...instrument };
       } else if (instrument.segment === "BFO-OPT" && (instrument.name === "BANKEX" || instrument.name === "SENSEX") && (instrument.instrument_type === "PE" || instrument.instrument_type === "CE") && structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}`] && structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type]) {
-        structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}`].ltpToken = instrument.instrument_token;
+        structuredData.BSE[instrument.name][`${instrument.expiry} : ${instrument.strike}`][instrument.instrument_type].ltpToken = instrument.instrument_token;
         //add ltp token to subscribed instruments list
         this.tokenToBeSubscribed.push(Number(instrument.instrument_token));
         //create a map with symbol from broker as key and info from broker + info from kite as value
