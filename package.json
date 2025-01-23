@@ -28,6 +28,7 @@
     "socket.io": "^4.7.5",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3",
     "upstox-js-sdk": "^2.4.0",
     "useragent": "^2.3.0",
     "uuid": "^10.0.0",
