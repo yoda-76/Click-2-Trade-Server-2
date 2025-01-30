@@ -1,0 +1,70 @@
+{
+    "instrument_key": "NSE_FO|55199",
+    "exchange_token": "55199",
+    "tradingsymbol": "BANKNIFTY24DEC61000PE",
+    "name": "BANKNIFTY",
+    "last_price": "7570.0",
+    "expiry": "2024-12-24",
+    "strike": "61000.0",
+    "tick_size": "0.05",
+    "lot_size": "15",
+    "instrument_type": "OPTIDX",
+    "option_type": "PE",
+    "exchange": "NSE_FO"
+}
+{
+    "instrument_token": "3329",
+    "exchange_token": "13",
+    "tradingsymbol": "ABB",
+    "name": "ABB INDIA",
+    "last_price": "0",
+    "expiry": "",
+    "strike": "0",
+    "tick_size": "0.05",
+    "lot_size": "1",
+    "instrument_type": "EQ",
+    "segment": "NSE",
+    "exchange": "NSE"
+}
+
+{
+    "instrument_token": "128000516",
+    "exchange_token": "500002",
+    "tradingsymbol": "ABB",
+    "name": "ABB INDIA",
+    "last_price": "0",
+    "expiry": "",
+    "strike": "0",
+    "tick_size": "0.05",
+    "lot_size": "1",
+    "instrument_type": "EQ",
+    "segment": "BSE",
+    "exchange": "BSE"
+}
+
+{
+    "weekly": false,
+    "segment": "NSE_FO",
+    "name": "BANKNIFTY",
+    "exchange": "NSE",
+    "expiry": 1735064999000,
+    "instrument_type": "PE",
+    "asset_symbol": "BANKNIFTY",
+    "underlying_symbol": "BANKNIFTY",
+    "instrument_key": "NSE_FO|55199",
+    "lot_size": 15,
+    "freeze_quantity": 900.0,
+    "exchange_token": "55199",
+    "minimum_lot": 15,
+    "asset_key": "NSE_INDEX|Nifty Bank",
+    "underlying_key": "NSE_INDEX|Nifty Bank",
+    "tick_size": 5.0,
+    "asset_type": "INDEX",
+    "underlying_type": "INDEX",
+    "trading_symbol": "BANKNIFTY 61000 PE 24 DEC 24",
+    "strike_price": 61000.0,
+    "qty_multiplier": 1.0
+}
+
+
+

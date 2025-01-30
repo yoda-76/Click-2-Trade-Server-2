@@ -657,24 +657,24 @@ export class DhanBroker {
           // console.log(this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.00000`][optionType]);
           instrument = this.instrumentData[exchange][baseInstrument][`${expiry} : ${strike}.00000`][optionType];
           key=  instrument.SEM_SMST_SECURITY_ID
-          exchangeSegment = exchange==="BSE"? "NSE_FNO": "BSE_FNO";
+          exchangeSegment = exchange==="NSE"? "NSE_FNO": "BSE_FNO";
         }else if(instrumentType === "EQ-OPT"){
           // console.log(this.instrumentData.NSE[baseInstrument][`${expiry} : ${strike}.00000`][optionType]);
           instrument = this.instrumentData[exchange].EQUITY_OPTION[baseInstrument][`${expiry} : ${strike}.00000`][optionType];
           key=  instrument.SEM_SMST_SECURITY_ID
-          exchangeSegment = exchange==="BSE"? "NSE_FNO": "BSE_FNO";
+          exchangeSegment = exchange==="NSE"? "NSE_FNO": "BSE_FNO";
         }else if(instrumentType === "EQ"){
           instrument = this.instrumentData[exchange].EQUITY[baseInstrument];
           key=  instrument.SEM_SMST_SECURITY_ID
-          exchangeSegment = exchange==="BSE"? "NSE_EQ": "BSE_EQ";
+          exchangeSegment = exchange==="NSE"? "NSE_EQ": "BSE_EQ";
         }else if(instrumentType === "IDX-FUT"){
           instrument = this.instrumentData[exchange].FUTURES[baseInstrument][`${expiry}`];
           key=  instrument.SEM_SMST_SECURITY_ID
-          exchangeSegment = exchange==="BSE"? "NSE_FNO": "BSE_FNO";
+          exchangeSegment = exchange==="NSE"? "NSE_FNO": "BSE_FNO";
         }else if(instrumentType === "EQ-FUT"){
           instrument = this.instrumentData[exchange].FUTURES.EQUITY[baseInstrument][`${expiry}`];
           key=  instrument.SEM_SMST_SECURITY_ID
-          exchangeSegment = exchange==="BSE"? "NSE_FNO": "BSE_FNO";
+          exchangeSegment = exchange==="NSE"? "NSE_FNO": "BSE_FNO";
         }
         else{
           throw new Error('Instrument type not supported');
@@ -736,8 +736,8 @@ export class DhanBroker {
               securityId: key,
               quantity: slicedQty[i],
               disclosedQuantity: 0,
-              price: orderType!="MARKET"?price:0,
-              // afterMarketOrder: true
+              price: orderType!="MARKET"?price:0
+              // afterMarketOrder: false
             }
           };
 
@@ -748,7 +748,7 @@ export class DhanBroker {
         }
         return true;
       } catch (error) {
-        // console.log(error);
+        console.log(error);
         throw error;
       }
   }
